@@ -50,76 +50,78 @@ bwa index -a bwtsw ref.fa
 bwa mem –T 19 ref.fa reads.fq > aln-se.sam (single-end reads)
 bwa mem –T 19 ref.fa read1.fq read2.fq > aln-pe.sam (paired-end reads)
 ```
-### Step2. circRNA detection and quantification
+### Step2. CircRNA detection and quantification
+
+CIRI3 provides multiple input options for the identification and quantification of circRNAs, including single-sample input, multiple-sample input, multiple-sample files containing RNase R treated information. In addition, users have the option to input a collection of circRNAs of interest, allowing CIRI3 to quantify the BSJ and FSJ of these circRNAs within the samples.
 
 A small test data set is provided in [test_data/test_data_espresso_sirv.tar.gz](test_data/test_data_espresso_sirv.tar.gz). The unpacked files are:
 
-#### ①Identification and quantification of circRNA in a single sam/bam alignment
+#### 1)Single-SAM/BAM files as input
+CIRI3
+```
+## without the annotation gtf
+Java -jar CIRI3.jar -I ./data/circRNA/SAM/0/sample.sam -O ./data/circRNA/SAM/0/result.txt -F ./data/circRNA/chr1.fa
+## with the annotation gtf
+Java -jar CIRI3.jar -I sample.sam -O result.txt -F chr1.fa -A chr1.gtf
+```
+
+#### 2)Multiple-SAM/BAM files as input
 
 ```
 ## without the annotation gtf
 Java -jar CIRI3.jar -I ./data/circRNA/SAM/0/sample.sam -O ./data/circRNA/SAM/0/result.txt -F ./data/circRNA/chr1.fa
 ## with the annotation gtf
 Java -jar CIRI3.jar -I sample.sam -O result.txt -F chr1.fa -A chr1.gtf
-
 ```
-
-#### ②Identification and quantification of circRNA with sam/bam alignments list
+#### 3)Multiple-SAM/BAM files containing RNase R treated information as input
 
 ```
 ## without the annotation gtf
 Java -jar CIRI3.jar -I ./data/circRNA/SAM/0/sample.sam -O ./data/circRNA/SAM/0/result.txt -F ./data/circRNA/chr1.fa
 ## with the annotation gtf
 Java -jar CIRI3.jar -I sample.sam -O result.txt -F chr1.fa -A chr1.gtf
+```
+#### 4)CircRNA collections of interest and sam/bam files as inputs
 
 ```
-### Example
+## without the annotation gtf
+Java -jar CIRI3.jar -I ./data/circRNA/SAM/0/sample.sam -O ./data/circRNA/SAM/0/result.txt -F ./data/circRNA/chr1.fa
+## with the annotation gtf
+Java -jar CIRI3.jar -I sample.sam -O result.txt -F chr1.fa -A chr1.gtf
+```
+
+### Step3. Differential Expression Analysis
+
+CIRI3 provides multiple input options for the identification and quantification of circRNAs, including single-sample input, multiple-sample input, multiple-sample files containing RNase R treated information. In addition, users have the option to input a collection of circRNAs of interest, allowing CIRI3 to quantify the BSJ and FSJ of these circRNAs within the samples.
 
 A small test data set is provided in [test_data/test_data_espresso_sirv.tar.gz](test_data/test_data_espresso_sirv.tar.gz). The unpacked files are:
 
-* SIRV2_3.sort.sam: sorted aligned reads
-* SIRV2.fasta: reference sequence for SIRV2
-* SIRV_C.gtf: annotation of SIRV isoforms
-
-Create a tab separated file that describes the ESPRESSO input. Call that file samples.tsv:
+#### 1)Single-SAM/BAM files as input
+CIRI3
 ```
-/path/to/SIRV2_3.sort.sam	test_sample_name
+## without the annotation gtf
+Java -jar CIRI3.jar -I ./data/circRNA/SAM/0/sample.sam -O ./data/circRNA/SAM/0/result.txt -F ./data/circRNA/chr1.fa
+## with the annotation gtf
+Java -jar CIRI3.jar -I sample.sam -O result.txt -F chr1.fa -A chr1.gtf
 ```
-
-In this example there is only one SAM file. If there were multiple SAM files then each would be on a separate line in samples.tsv. The second column is the sample name and can be used to group multiple input SAM files together in the final output.
-
-
-Run `ESPRESSO_S` to pre-process the inputs to determine high confidence splice junctions and other info needed for later steps:
+#### 1)Single-SAM/BAM files as input
+CIRI3
 ```
-perl ESPRESSO_S.pl -A SIRV_C.gtf -L samples.tsv -F SIRV2.fasta -O test_sirv
+## without the annotation gtf
+Java -jar CIRI3.jar -I ./data/circRNA/SAM/0/sample.sam -O ./data/circRNA/SAM/0/result.txt -F ./data/circRNA/chr1.fa
+## with the annotation gtf
+Java -jar CIRI3.jar -I sample.sam -O result.txt -F chr1.fa -A chr1.gtf
 ```
-
-This will produce the file `test_sirv/samples.tsv.updated` which assigns target IDs to SAM files. In this example there is only one SAM with ID 0:
+#### 1)Single-SAM/BAM files as input
+CIRI3
 ```
-/path/to/SIRV2_3.sort.sam	test_sample_name	0
-```
-
-Run `ESPRESSO_C` to correct and recover splice junctions for each read:
-```
-perl ESPRESSO_C.pl -I test_sirv -F SIRV2.fasta -X 0 -T 5
+## without the annotation gtf
+Java -jar CIRI3.jar -I ./data/circRNA/SAM/0/sample.sam -O ./data/circRNA/SAM/0/result.txt -F ./data/circRNA/chr1.fa
+## with the annotation gtf
+Java -jar CIRI3.jar -I sample.sam -O result.txt -F chr1.fa -A chr1.gtf
 ```
 
-The -X parameter identifies which input is being processed. In this example there is only a single target ID (0). If there were multiple inputs then `ESPRESSO_C` would be run separately for each ID in samples.tsv.updated.
 
-
-Run `ESPRESSO_Q` to identify and quantify all isoforms from the reads:
-```
-perl ESPRESSO_Q.pl -A SIRV_C.gtf -L test_sirv/samples.tsv.updated -V test_sirv/samples_N2_R0_compatible_isoform.tsv
-```
-
-The three main output files are in `test_sirv/` and provide details of the three detected isoforms (SIRV201,202,203). See [Output](#output) for a description of the files. The output file `test_sirv/samples_N2_R0_abundance.esp` should be similar to [test_data/expected_sirv_abundance.esp](test_data/expected_sirv_abundance.esp).
-
-The visualization files can be generated with
-```
-python3 visualization/visualize.py --genome-fasta SIRV2.fasta --updated-gtf test_sirv/samples_N2_R0_updated.gtf --abundance-esp test_sirv/samples_N2_R0_abundance.esp --target-gene SIRV2 --minimum-count 1 --descriptive-name SIRV --output-dir test_sirv/visualization
-```
-
-![SIRV result visualization](test_data/visualization_sirv.png)
 
 ### Preparing Input Files
 
@@ -136,33 +138,6 @@ That command assumes that the data is from a Nanopore r9.4.1 cDNA library and it
 All the separate .fastq files can be combined into a single file with:
 ```
 cat /path/to/fastq/*.fastq > combined.fastq
-```
-
-#### Alignment
-
-One possible alignment tool is Minimap2[1]. This command can output a SAM file without secondary alignments:
-```
-minimap2 -ax splice -ub --secondary=no ref.fasta combined.fastq > in.sam
-```
-
-For noisy 1D Nanopore data the developer of Minimap2 suggests adding -k 14 and -w 4
-```
-minimap2 -ax splice -ub -k14 -w 4 --secondary=no ref.fasta combined.fastq > in.sam
-```
-
-A BED file can be provided to assist the mapping:
-```
-paftools.js gff2bed anno.gtf > junctions.bed
-minimap2 -ax splice -ub -k14 -w 4 --junc-bed junctions.bed --secondary=no ref.fasta combined.fastq > in.sam
-```
-
-Only the common format of CIGAR values is accepted by ESPRESSO, so please do **NOT** use parameters to output a specific format of CIGAR values (e.g. --cs in minimap2).
-
-#### Sorted Alignment
-
-The input SAM files need to be sorted by samtools before running ESPRESSO:
-```
-samtools sort -o sorted.sam unsorted.sam
 ```
 
 ### All Arguments
@@ -318,42 +293,6 @@ optional arguments:
   --output-dir OUTPUT_DIR
                         where to write visualization files
 ```
-
-### IGV
-
-* The visualization output can be viewed in IGV: [https://igv.org](https://igv.org)
-  + Download the desktop app.
-* In IGV:
-  + Genomes -> Load Genome from File -> {file}.fasta and {file}.fasta.fai
-  + File -> Load from File -> {file}.gtf
-    - Right click gtf track.
-    - Select "squished".
-    - Set track height to a large enough value.
-  + File -> Load from File -> {sample_name}.bw for each sample
-    - Right click track.
-    - Select "Autoscale".
-    - Select "Maximum" under "Windowing Function".
-    - "Change Track Color".
-  + View -> Add New Panel
-    - Click and drag panel borders to show the new panel.
-  + File -> Load from File -> target_genes/{file}.bed
-    - Click name of new track and drag to the appropriate panel.
-  + Adjust the coordinates to show the data.
-  + File -> Save Image ->
-    - Change file extension to .svg
-* Some changes were made manually to the example images.
-  + [https://inkscape.org/](https://inkscape.org/) can be used to edit .svg files.
-  + Remove extra details such as borders and header info.
-  + Change the color of the baseline for each density plot.
-  + Add a horizontal center line for each isoform.
-  + Move one expression value for each isoform to the left axis and remove the duplicate values.
-  + Add horizontal lines between panels.
-  + Edit the text on the left axis.
-  + Add a text title at the bottom.
-
-## Test
-
-* Run the automated tests in [tests/](tests/) with [./run_tests](./run_tests)
 
 ## References
 
