@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import com.zx.hg19.IsBSJIntronHg2;
+import com.zx.hg38.IsBSJIntronHg2;
 
 public class IsBSJScan2Intron extends IsBSJScan2 {
 	IsBSJIntronHg2 isBSJHg2Intron;

@@ -26,8 +26,8 @@ import com.zx.findcircrna.MutUserFindCircRNAScan2;
 import com.zx.findcircrna.ReadFaFile;
 import com.zx.findcircrna.SiteSort;
 import com.zx.findcircrna.Summary;
-import com.zx.hg19.Annotation;
-import com.zx.hg19.AnnotationIntron;
+import com.zx.hg38.Annotation;
+import com.zx.hg38.AnnotationIntron;
 public class MutTest {
 	private int minMapqUni,maxCircle,minCircle,linear_range_size_min,strigency,relExp,seqLen = 0,AllFileSplitNum = 10;;
 	private long matchNum = 0;
@@ -166,7 +166,7 @@ public class MutTest {
 								}
 							}
 							HashMap<String, Integer> circFSJMapTem = scan2.getCircFSJMap();
-							HashMap<String, Integer> circBSJMapTem = scan2.getCircFSJMap();
+							HashMap<String, Integer> circBSJMapTem = scan2.getCircBSJMap();
 							scan2 = null;
 							//合并信息
 							lock.lock();
@@ -181,6 +181,7 @@ public class MutTest {
 							lock.unlock();
 							scan1IdMap = null;
 							circFSJMapTem = null;
+							circBSJMapTem = null;
 							threadSub.await();
 							threadMain.await();		
 						}						
@@ -229,9 +230,7 @@ public class MutTest {
 			RF = null;
 			System.out.println(df.format(System.currentTimeMillis())+" "+":Successful import of reference genome files");   
 			fileLog.write(df.format(System.currentTimeMillis())+" "+":Successful import of reference genome files"+"\n");
-			//根据文件大小拆分文件
-			HashMap<String, HashSet<String>> chrCircSiteMap = new HashMap<String, HashSet<String>>();
-			HashSet<String> circSiteSet = new HashSet<String>();
+			//判断划分区域的个数
 			File file = new File(samFile);
 	    	long fileSizeGB = file.length()/1024/1024/1024;
 	    	if (fileSizeGB > 200 && fileSizeGB > threads*10) {
@@ -239,14 +238,19 @@ public class MutTest {
 			}else {
 				AllFileSplitNum = threads;
 			}
+	    	//根据文件大小拆分文件
+			HashMap<String, HashSet<String>> chrCircSiteMap = new HashMap<String, HashSet<String>>();
+			HashSet<String> circSiteSet = new HashSet<String>();
 			if (UserGivecircRNAG.equals("")) {				
 			    threadMain.await();//所有线程激活2
 			    threadMain.reset();//更新主线程
-				threadSub.await();//主线程关闭，子线程激活1
+				threadSub.await();//主线程关闭，子线程激活1				
+				//第一遍扫描完毕
+				System.out.println(df.format(System.currentTimeMillis())+" "+":Mapped_Reads "+matchNum);  
+				fileLog.write(df.format(System.currentTimeMillis())+" "+":Mapped_Reads "+matchNum+"\n");
 				//更新原子
 				incr.set(1);
-				//导入文件
-				//HashMap<String, String> scan1IdMap = new HashMap<String, String>();
+				//导入BSJ set
 				for (int i = 1; i <= AllFileSplitNum; i++) {
 					BufferedReader BSJbr = new BufferedReader(new FileReader(new File(samFile+"BSJ"+i)));
 					String line = BSJbr.readLine();
@@ -274,6 +278,7 @@ public class MutTest {
 			
 			//创建位点矩阵和位点字典			
 			circFSJMap = new HashMap<String, Integer>();
+			circBSJMap = new HashMap<String, Integer>();
 			chrSiteMap1 = new HashMap<String, HashMap<Integer, ArrayList<SiteSort>>>();
 			HashMap<Integer, ArrayList<SiteSort>> SiteMap1 = new HashMap<Integer, ArrayList<SiteSort>>();
 			ArrayList<SiteSort> siteList1 = new ArrayList<SiteSort>();
@@ -354,6 +359,7 @@ public class MutTest {
 		    threadMain.reset();//更新主线程
 			threadSub.await();//主线程关闭，子线程激活2
 			
+			//第二遍扫描完毕			
 			//清理内存
 			chrSiteMap1 = null;
 			SiteMap1 = null;
@@ -373,11 +379,6 @@ public class MutTest {
 				circFSJMap = null;
 				summary = null;
 				chrTCGAMap = null;
-				//删除中间文件
-				for (int i = 1; i <= AllFileSplitNum; i++) {
-					new File(samFile+"BSJ"+i).delete();	
-					
-				}		
 				//注释circRNA
 				if (intronLable) {
 					AnnotationIntron annotation = new AnnotationIntron();
@@ -389,6 +390,9 @@ public class MutTest {
 				System.out.println(df.format(System.currentTimeMillis())+" "+":Collation of circRNA completed");  
 				fileLog.write(df.format(System.currentTimeMillis())+" "+":Collation of circRNA completed"+"\n");
 			}else {	
+				System.out.println(df.format(System.currentTimeMillis())+" "+":Mapped_Reads "+matchNum);  
+				fileLog.write(df.format(System.currentTimeMillis())+" "+":Mapped_Reads "+matchNum+"\n");
+				
 	    		BufferedWriter BSJBw = new BufferedWriter(new FileWriter(new File(outPutBSJCountFile)));
 	    		BufferedWriter FSJBw = new BufferedWriter(new FileWriter(new File(outPutFSJCountFile)));
 	    		BSJBw.write("circRNA"+"\t"+"BSJ"+"\n");
@@ -399,16 +403,21 @@ public class MutTest {
 				}
 	    		BSJBw.close();
 	    		FSJBw.close();
-			}
-			
+			}			
 			threadMain.await();//所有线程激活2
 		} catch (Exception e) { 
 			e.printStackTrace();
 		}		
 		poolExe.shutdown();
+		//删除中间文件
+		for (int i = 1; i <= AllFileSplitNum; i++) {
+			new File(samFile+"BSJ"+i).delete();			
+		}	
+		//删除sam文件
+		if (inputFile.substring(inputFile.length()-3,inputFile.length()).equals("bam")){
+			new File(samFile).delete();			
+		}	
 		long endTime = System.currentTimeMillis(); 
-		System.out.println(df.format(System.currentTimeMillis())+" "+":Mapped_Reads "+matchNum);  
-		fileLog.write(df.format(System.currentTimeMillis())+" "+":Mapped_Reads "+matchNum+"\n");
 		System.out.println("Program run time:" + (endTime - startTime) + "ms");
 		fileLog.write("Program run time:" + (endTime - startTime) + "ms"+"\n");
 		fileLog.close();

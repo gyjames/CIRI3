@@ -44,8 +44,7 @@ public class Annotation {
 		ArrayList<Integer[]> exonSiteList = new ArrayList<Integer[]>();
 		BufferedWriter annotationCirc = new BufferedWriter(new FileWriter(new File(outPut)));
 		annotationCirc.write("circRNA_ID"+ "\t"+"chr"+ "\t"+"circRNA_start"+ "\t"+"circRNA_end"+ "\t"+"#junction_reads"+ "\t"+"SM_MS_SMS"
-				+ "\t"+"#non_junction_reads"+ "\t"+"junction_reads_ratio"+ "\t"+"circRNA_type"+ "\t"+"gene_id"+ "\t"+"strand"+ "\t"+ "junction_reads_ID"
-				+ "\t"+ "Score"+"\n");
+				+ "\t"+"#non_junction_reads"+ "\t"+"junction_reads_ratio"+ "\t"+"circRNA_type"+ "\t"+"gene_id"+ "\t"+"strand"+ "\t"+ "junction_reads_ID"+"\n");
 		for (String chrKey : circChrMap.keySet()) {
 			circList = circChrMap.get(chrKey);
 			if (geneExonMap.containsKey(chrKey)) {
@@ -60,7 +59,7 @@ public class Annotation {
 							if (chrExonStartMap.get(startKey).equals(chrExonEndMap.get(endKey))) {
 								String[] geneStand = chrExonStartMap.get(startKey).split("\t");
 								annotationCirc.write(circTem[0]+ "\t"+circTem[1]+ "\t"+circTem[2]+ "\t"+circTem[3]+ "\t"+circTem[4]+ "\t"+circTem[5]+ "\t"+circTem[6]+ "\t"+circTem[7]+ "\t"+
-										"exon"+ "\t"+geneStand[0]+ "\t"+geneStand[1]+ "\t"+circTem[9]+ "\t"+circTem[10]+ "\n");
+										"exon"+ "\t"+geneStand[0]+ "\t"+geneStand[1]+ "\t"+circTem[9]+ "\n");
 								continue;
 							}
 						}
@@ -91,12 +90,12 @@ public class Annotation {
 								}
 								if (if_start_ok ==1 && if_end_ok ==1) {
 									annotationCirc.write(circTem[0]+ "\t"+circTem[1]+ "\t"+circTem[2]+ "\t"+circTem[3]+ "\t"+circTem[4]+ "\t"+circTem[5]+ "\t"+circTem[6]+ "\t"+circTem[7]+ "\t"+
-											"exon"+ "\t"+geneTem[1]+ "\t"+circTem[8]+ "\t"+circTem[9]+ "\t"+circTem[10]+ "\n");
+											"exon"+ "\t"+geneTem[1]+ "\t"+circTem[8]+ "\t"+circTem[9]+ "\n");
 									tagType = 1;
 									break;
 								}else {
 									annotationCirc.write(circTem[0]+ "\t"+circTem[1]+ "\t"+circTem[2]+ "\t"+circTem[3]+ "\t"+circTem[4]+ "\t"+circTem[5]+ "\t"+circTem[6]+ "\t"+circTem[7]+ "\t"+
-											"intron"+ "\t"+geneTem[1]+ "\t"+circTem[8]+ "\t"+circTem[9]+ "\t"+circTem[10]+ "\n");
+											"intron"+ "\t"+geneTem[1]+ "\t"+circTem[8]+ "\t"+circTem[9]+ "\n");
 									tagType = 1;
 									break;
 								}
@@ -111,7 +110,7 @@ public class Annotation {
 					if(tagType == 0) {
 						circTem = circList.get(i).getLength();
 						annotationCirc.write(circTem[0]+ "\t"+circTem[1]+ "\t"+circTem[2]+ "\t"+circTem[3]+ "\t"+circTem[4]+ "\t"+circTem[5]+ "\t"+circTem[6]+ "\t"+circTem[7]+ "\t"+
-								"intergenic_region"+ "\t"+"NA"+ "\t"+circTem[8]+ "\t"+circTem[9]+ "\t"+circTem[10]+ "\n");
+								"intergenic_region"+ "\t"+"NA"+ "\t"+circTem[8]+ "\t"+circTem[9]+ "\n");
 					}
 					
 				}
@@ -119,7 +118,7 @@ public class Annotation {
 				for (int i = 0; i < circList.size(); i++) {
 					String[] circTem = circList.get(i).getLength();
 					annotationCirc.write(circTem[0]+ "\t"+circTem[1]+ "\t"+circTem[2]+ "\t"+circTem[3]+ "\t"+circTem[4]+ "\t"+circTem[5]+ "\t"+circTem[6]+ "\t"+circTem[7]+ "\t"+
-							"intergenic_region"+ "\t"+"NA"+ "\t"+circTem[8]+ "\t"+circTem[9]+ "\t"+circTem[10]+ "\n");
+							"intergenic_region"+ "\t"+"NA"+ "\t"+circTem[8]+ "\t"+circTem[9]+ "\n");
 				}
 				
 			}

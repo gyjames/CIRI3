@@ -1,0 +1,7 @@
+#SamFile：sam文件绝对路径
+#RNase：0：未进行RNase处理  1：进行RNase处理	2：是否进行RNase处理未知
+#SamFile	Class
+/p300s/gaoyuan_group/zhengxin/CIRI3/data/circRNA/RNase/sample1.sam	0
+/p300s/gaoyuan_group/zhengxin/CIRI3/data/circRNA/RNase/sample2.sam	0
+/p300s/gaoyuan_group/zhengxin/CIRI3/data/circRNA/RNase/sample3.sam	1
+/p300s/gaoyuan_group/zhengxin/CIRI3/data/circRNA/RNase/sample4.sam	1

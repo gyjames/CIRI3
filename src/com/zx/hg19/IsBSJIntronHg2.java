@@ -1,11 +1,14 @@
 package com.zx.hg19;
 
+import smith.SmithWaterman;
+
 public class IsBSJIntronHg2 extends IsBSJHg2{
 	int initial_size2 = 5;
+	SmithWaterman alignerIntron = new SmithWaterman( 1, -1, -1);
 	public IsBSJIntronHg2(int linear_range_size_min,int minMapqUni) {
 		super(linear_range_size_min, minMapqUni);
 	}
-	public String isBSJHg2Intron(String circLineArr[], String chrTAGA) {
+	public int isBSJHg2Intron(String circLineArr[], String chrTAGA) {
 	    //Variables are assigned according to inputted variables
 	    // Existence of str3 can be determined by number of inputted variables	
 	    String str,pem_null_range_seq = "",initial_seq,circ_range_seq;
@@ -20,9 +23,9 @@ public class IsBSJIntronHg2 extends IsBSJHg2{
 		if (circLineArr[2].equals("sm")) {			
 			if(str.length()<5) {
 				if (!circ_range_seq.substring(circRangeLen-len_str,circRangeLen).equals(str)) {
-					return "0";
+					return 0;
 				}else {
-					return "2";	
+					return 2;	
 				}
 			}else {
 				int Initial = 1;
@@ -30,12 +33,12 @@ public class IsBSJIntronHg2 extends IsBSJHg2{
 				if (circ_range_seq.substring(circRangeLen-initial_size2,circRangeLen).equals(initial_seq)) {
 					Initial = 0;
 				}else {
-					aligner.setSeq(circ_range_seq.substring(circRangeLen-initial_size2,circRangeLen),initial_seq);
-					String[] alignment = aligner.getAlignment();
-					if (aligner.getAlignmentScore()>=3 && alignment[0].length()>=4) {
+					alignerIntron.setSeq(circ_range_seq.substring(circRangeLen-initial_size2,circRangeLen),initial_seq);
+					String[] alignment = alignerIntron.getAlignment();
+					if (alignerIntron.getAlignmentScore()>=3 && alignment[0].length()>=4) {
 						
 					}else {
-						return "0";
+						return 0;
 					}
 				}
 				boolean lable = true;
@@ -55,7 +58,7 @@ public class IsBSJIntronHg2 extends IsBSJHg2{
 				}
 				aligner.setSeq(circ_range_seq.substring(circRangeLen-len_str,circRangeLen),str);
 				String[] alignment = aligner.getAlignment();
-				if (aligner.getAlignmentScore()>=len_str-2*(Initial+len_str/10) && alignment[1].length() >= len_str -2) {
+				if (aligner.getAlignmentScore()>=len_str-2*(Initial+1+(len_str-1)/10)  && alignment[1].length() >= 2) {
 					if (circLineArr[0].equals("1")) {
 						pem_null_range_seq = linear_range;
 					}
@@ -71,19 +74,19 @@ public class IsBSJIntronHg2 extends IsBSJHg2{
 								pem_null_range_seq = linear_range;
 							}
 						}else {
-							return "2";
+							return 2;
 						}												
 					}else {
-						return "0";
+						return 0;
 					}								
 				}					
 			}							
 		}else {		
 			if(str.length()<5) {
 				if (!circ_range_seq.substring(0,circRangeLen).equals(str)) {
-					return "0";
+					return 0;
 				}else {
-					return "2";	
+					return 2;	
 				}
 			}else {
 				int Initial = 1;
@@ -91,12 +94,12 @@ public class IsBSJIntronHg2 extends IsBSJHg2{
 				if (circ_range_seq.substring(0,initial_size2).equals(initial_seq)) {
 					Initial = 0;
 				}else {
-					aligner.setSeq(circ_range_seq.substring(0,initial_size2),initial_seq);
-					String[] alignment = aligner.getAlignment();
-					if (aligner.getAlignmentScore()>=3 && alignment[0].length()>=4) {
+					alignerIntron.setSeq(circ_range_seq.substring(0,initial_size2),initial_seq);
+					String[] alignment = alignerIntron.getAlignment();
+					if (alignerIntron.getAlignmentScore()>=3 && alignment[0].length()>=4) {
 						
 					}else {
-						return "0";
+						return 0;
 					}
 				}
 				boolean lable = true;
@@ -116,7 +119,7 @@ public class IsBSJIntronHg2 extends IsBSJHg2{
 				}
 				aligner.setSeq(circ_range_seq.substring(0,len_str),str);
 				String[] alignment = aligner.getAlignment();
-				if (aligner.getAlignmentScore() >= str.length()-2*(Initial+len_str/10)  && alignment[1].length() >= len_str -2) {
+				if (aligner.getAlignmentScore() >= str.length()-2*(1+Initial+(len_str-1)/10)  && alignment[1].length() >= len_str -2) {
 					if (circLineArr[0].equals("1")) {
 						pem_null_range_seq = linear_range;
 					}
@@ -132,22 +135,22 @@ public class IsBSJIntronHg2 extends IsBSJHg2{
 								pem_null_range_seq = linear_range;
 							}
 						}else {
-							return "2";
+							return 2;
 						}												
 					}else {
-						return "0";
+						return 0;
 					}								
 				}
 			}																										
 		}
 		if (!circLineArr[7].equals("*")) {
 			if (IIC2.isInCircRNA2(circLineArr[7], circ_range_seq) == 0) {
-				return "0";
+				return 0;
 			}
 		}			
 		if (circLineArr[6].length()>5) {
-			return IIC3.isInCircRNA3(circLineArr[6],circLineArr[8],circ_range_seq,pem_null_range_seq)+"2";		
+			return IIC3.isInCircRNA3(circLineArr[6],circLineArr[8],circ_range_seq,pem_null_range_seq);		
 		}
-		return "12";				
+		return 1;				
 	}
 }

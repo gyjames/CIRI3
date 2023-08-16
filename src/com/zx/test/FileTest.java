@@ -22,8 +22,8 @@ import com.zx.findcircrna.ReadFaFile;
 import com.zx.findcircrna.SiteSort;
 import com.zx.findcircrna.Summary;
 import com.zx.findcircrna.UserFindCircRNAScan2;
-import com.zx.hg19.Annotation;
-import com.zx.hg19.AnnotationIntron;
+import com.zx.hg38.Annotation;
+import com.zx.hg38.AnnotationIntron;
 
 public class FileTest {
 	private int minMapqUni,maxCircle,minCircle,linear_range_size_min,strigency,relExp;
@@ -136,6 +136,7 @@ public class FileTest {
 				System.out.println("Running:"+samFile);  
 				scan1.findCircRNAScan1(samFile);
 				//获取匹配的reads数目
+				System.out.println(samFile+" Mapped_Reads"+" "+scan1.getReadNum());  
 				fileLog.write(samFile+" Mapped_Reads"+" "+scan1.getReadNum()+"\n");
 				scan1.setReadNum();
 			}
@@ -175,8 +176,7 @@ public class FileTest {
 			GetUserCircRNA guc = new GetUserCircRNA();
 			chrCircSiteMap = guc.summaryUserCircRNA(UserGivecircRNA, chrTCGAMap);
 			seqLen = 500;
-		}
-		
+		}		
 	    //第二遍扫描
 	    //制作索引
 		seqLen = seqLen-12;		
@@ -283,15 +283,14 @@ public class FileTest {
  				scan2.findCircRNAScan2(samFile,scan1IdTotalMap.get(samFile));			
  				//FSJ
  				HashMap<String, Integer> circNewFSJMap = scan2.getCircFSJMap();
- 				for (String circKey : circNewFSJMap.keySet()) {
- 					FSJmatrix[circRowMap.get(circKey)][j] = circNewFSJMap.get(circKey);
+ 				for (String circKey : circNewFSJMap.keySet()) {				
+ 					//合并信息
+ 					int numAll = circFSJMap.get(circKey);
+ 					int numTem = circNewFSJMap.get(circKey);
+ 					circFSJMap.put(circKey, numAll+numTem);
+ 					//输出FSJ矩阵
+ 					FSJmatrix[circRowMap.get(circKey)][j] = numTem;
  				}								
- 				//取出第二遍扫描后的FSJ信息，并汇总
- 				for (String circ : circNewFSJMap.keySet()) {
- 					int numAll = circFSJMap.get(circ);
- 					int numTem = circNewFSJMap.get(circ);
- 					circFSJMap.put(circ, numAll+numTem);
- 				}
  				//重置FSJ
  				scan2.setFSJScan2List();
  			}					
@@ -318,7 +317,7 @@ public class FileTest {
  				while (line != null ) {					
  					String[] circLineArr = line.split("\t",7);				
  					if (circLineArr[2].equals("1")) {
- 						String chrStartEnd = circLineArr[3] + ":" + circLineArr[4] + "|" + circLineArr[5];
+ 						String chrStartEnd = circLineArr[3] + "\t" + circLineArr[4] + "\t" + circLineArr[5];
  						if (!circMap.containsKey(chrStartEnd)) {
  							circMap.put(chrStartEnd, 1);
  						} else {
@@ -332,8 +331,7 @@ public class FileTest {
  				for (String circKey : circMap.keySet()) {
  					BSJmatrix[circRowMap.get(circKey)][i] = circMap.get(circKey);
  				}
- 			}
- 	        
+ 			}	        
  	        //合并总结
  			Summary summary = new Summary(strigency,chrTCGAMap);
  			ArrayList<String> SummaryCircList = summary.summary(filePathList,fileSplitNumMap,circFSJMap,UserGivecircRNA);
@@ -341,7 +339,6 @@ public class FileTest {
  			chrTCGAMap = null;
  			circFSJMap = null;
  			summary = null;
- 			filePathList = null;
  			//输出每个样本CircRNA对应BSJnum
  	        BufferedWriter BSJCount = new BufferedWriter(new FileWriter(new File(outPutBSJCountFile)));
  	        BSJCount.write("circRNA_ID"+"\t");
@@ -398,7 +395,10 @@ public class FileTest {
  			for (int j = 0; j < filePathList.size(); j++) {
  				String samFile = filePathList.get(j);
  				System.out.println("Running:"+samFile);  
- 				scan2.findCircRNAScan2(samFile,scan1IdTotalMap.get(samFile));			
+ 				scan2.findCircRNAScan2(samFile,scan1IdTotalMap.get(samFile));	
+ 				//输出比对上的read
+ 				System.out.println(samFile+" Mapped_Reads"+" "+scan2.getReadNum());  
+				fileLog.write(samFile+" Mapped_Reads"+" "+scan2.getReadNum()+"\n");
  				//FSJ
  				HashMap<String, Integer> circNewFSJMap = scan2.getCircFSJMap();
  				for (String circKey : circNewFSJMap.keySet()) {
@@ -452,7 +452,12 @@ public class FileTest {
  			}
  			BSJCount.close();	
  			FSJCount.close();
-		} 		
+		} 
+ 		//删除临时文件
+ 		for (int j = 0; j < filePathList.size(); j++) {
+			String samFile = filePathList.get(j);
+			new File(samFile+"BSJ1").delete();
+ 		}
 		long endTime = System.currentTimeMillis(); 
 		System.out.println("Program run time:" + (endTime - startTime) + "ms");
 		fileLog.write("Program run time:" + (endTime - startTime) + "ms"+"\n");

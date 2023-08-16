@@ -22,7 +22,7 @@ public class IsBSJHg1 {
 		this.chrExonEndMap = chrExonEndMap;
 		this.mitochondrion = mitochondrion;
 	}
-	public String isBSJHg1(String circLineArr[], String chrTAGA,int sumQ){
+	public String isBSJHg1(String circLineArr[], String chrTAGA){
 			String end_string1, end_string2, str_adjustment, initial_seq1, initial_seq2,
 					circ_range_seq = null, linear_range = null;
 			int tmp_site1, tmp_site2, adjt_bp, diff_adjt, site1_new = 0, site2_new = 0;				
@@ -224,8 +224,7 @@ public class IsBSJHg1 {
 							tag = IIC3.isInCircRNA3(circLineArr[5],circLineArr[8],circ_range_seq,pem_null_range_seq);
 											
 						} 
-						String circInfor =tag + "\t" + circLineArr[1]+"\t"+site1_new + "\t" + site2_new + "\t" + shiftArr[1]+"\t"+shiftArr[2]+ "\t" + shiftArr[3] 
-								+"\t" +sumQ;
+						String circInfor =tag + "\t" + circLineArr[1]+"\t"+site1_new + "\t" + site2_new + "\t" + shiftArr[1]+"\t"+shiftArr[2]+ "\t" + shiftArr[3];
 						return circInfor;
 					    }
 				    }

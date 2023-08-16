@@ -1,0 +1,10 @@
+2023-08-16 16:24:59 :CIRI3 start
+2023-08-16 16:24:59 :Successful import of reference genome files
+/p300s/gaoyuan_group/zhengxin/CIRI3/data/circRNA/RNase/sample1.sam Mapped_Reads 4178
+/p300s/gaoyuan_group/zhengxin/CIRI3/data/circRNA/RNase/sample2.sam Mapped_Reads 3946
+/p300s/gaoyuan_group/zhengxin/CIRI3/data/circRNA/RNase/sample3.sam Mapped_Reads 3996
+/p300s/gaoyuan_group/zhengxin/CIRI3/data/circRNA/RNase/sample4.sam Mapped_Reads 4084
+2023-08-16 16:25:00 :First scan completed
+2023-08-16 16:25:01 :Second scan completed
+2023-08-16 16:25:01 :Collation of circRNA completed
+Program run time:1759ms

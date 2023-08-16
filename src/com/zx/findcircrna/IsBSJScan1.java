@@ -4,8 +4,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import com.zx.hg19.IsBSJHg1;
-import com.zx.hg19.IsBSJIntronHg1;
+import com.zx.hg38.IsBSJHg1;
+import com.zx.hg38.IsBSJIntronHg1;
 
 public class IsBSJScan1 {
 	int minMapqUni,maxCircle,minCircle;

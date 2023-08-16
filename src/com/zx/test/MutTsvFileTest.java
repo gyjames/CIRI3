@@ -25,12 +25,12 @@ import com.zx.findcircrna.MutFindCircRNAScan2;
 import com.zx.findcircrna.ReadFaFile;
 import com.zx.findcircrna.SiteSort;
 import com.zx.findcircrna.Summary;
-import com.zx.hg19.Annotation;
-import com.zx.hg19.AnnotationIntron;
+import com.zx.hg38.Annotation;
+import com.zx.hg38.AnnotationIntron;
 
 public class MutTsvFileTest {
 	private int minMapqUni,maxCircle,minCircle,linear_range_size_min,strigency,relExp;
-	private boolean intronLable,mlable;
+	private boolean intronLable,mlable,isSam;
 	private String mitochondrion;
 	public MutTsvFileTest(int minMapqUni, int maxCircle, int minCircle,int linear_range_size_min,boolean intronLable,int strigency,int relExp,String mitochondrion,boolean mlable) {
 		super();
@@ -51,7 +51,7 @@ public class MutTsvFileTest {
 	private static Lock lock = new ReentrantLock();
 	ArrayList<String> circScan1List = new ArrayList<String>();
 	ArrayList<String> circScan2List = new ArrayList<String>();
-	private static HashMap<String, Integer> circFSJMap;
+	private static HashMap<String, Integer> circFSJMap,fileSplitNumMap;
 	private static HashMap<String, String> chrTCGAMap;
 	HashMap<String, String> chrExonStartMap = new HashMap<String, String>(),chrExonEndMap = new HashMap<String, String>();
 	HashMap<String, ArrayList<String>> chrExonStartTranscriptMap = new HashMap<String, ArrayList<String>>(),
@@ -128,7 +128,7 @@ public class MutTsvFileTest {
 						MutFindCircRNAScan2 scan2 = new MutFindCircRNAScan2(minMapqUni,circFSJMap,linear_range_size_min,siteArrayMap1,siteArrayMap2,chrSiteMap1,chrSiteMap2,
 			    				chrTCGAMap,seqLen,intronLable);  
 						HashMap<String, String> scan1IdMap = new HashMap<String, String>();
-						for (int j = 0; j < filePathList.size()-1; j++) {
+						for (int j = 0; j < filePathList.size(); j++) {
 							while(true) {
 								int threadNum = incr.getAndIncrement();
 								if (threadNum > AllFileSplitNum) {
@@ -157,38 +157,9 @@ public class MutTsvFileTest {
 							scan2.setFSJScan2List();
 							threadSub.await();
 							threadMain.await();								
-						}
-						while(true) {
-							int threadNum = incr.getAndIncrement();
-							if (threadNum > AllFileSplitNum) {
-								break;
-							}else {
-								scan1IdMap.clear();
-								BufferedReader BSJbr = new BufferedReader(new FileReader(new File(samFile+"BSJ"+threadNum)));
-								String line = BSJbr.readLine();
-								while (line != null) {
-									String[] BSJArr = line.split("\t",2);
-									scan1IdMap.put(BSJArr[0], "");
-									line = BSJbr.readLine();
-								}
-								BSJbr.close();
-								scan2.findCircRNAScan2(samFile,scan1IdMap,AllFileSplitNum,threadNum);																
-							}							
-						}		
-						HashMap<String, Integer> circFSJMapTem = scan2.getCircFSJMap();
-						lock.lock();
-						for (String circKey : circFSJMap.keySet()) {
-							int num = circFSJMap.get(circKey);						
-							int numNew = circFSJMapTem.get(circKey);
-							circFSJMap.put(circKey, num+numNew);
-						}	
-						lock.unlock();
+						}					
 						scan2 = null;
-						scan1IdMap = null; 
-						circFSJMapTem = null;
-						threadSub.await();
-						threadMain.await();
-						
+						scan1IdMap = null; 					
                       } catch (Exception e) {
 						e.printStackTrace();
 					}
@@ -233,8 +204,7 @@ public class MutTsvFileTest {
 			RF = null;
 			System.out.println(df.format(System.currentTimeMillis())+" "+":Successful import of reference genome files");  
 			fileLog.write(df.format(System.currentTimeMillis())+" "+":Successful import of reference genome files"+"\n");
-			
-			
+					
 			//记录哪些文件是Rnase
 	 		HashMap<String, ArrayList<String>> isRnaseFileMap = new HashMap<String, ArrayList<String>>();
 	 		//RNase：0：未进行RNase处理  1：进行RNase处理	2：是否进行RNase处理未知
@@ -273,6 +243,7 @@ public class MutTsvFileTest {
 						BamToSam bts = new BamToSam();
 						bts.bamToBam(samfile, samFileTem);
 						filePathList.add(samFileTem);
+						isSam = true;
 					}else {
 						System.out.println("Please enter the file that ends with sam or bam");
 						return false;
@@ -287,7 +258,7 @@ public class MutTsvFileTest {
 			long RNaseReadNum = 0;
 			long unRNaseReadNum = 0;
 			//存储文件的划分
-			HashMap<String, Integer> fileSplitNumMap = new HashMap<String, Integer>();
+			fileSplitNumMap = new HashMap<String, Integer>();
 			//存储文件名-circRNA信息
 		    for (int i = 0; i < filePathList.size(); i++) {
 		    	samFile = filePathList.get(i);
@@ -309,6 +280,7 @@ public class MutTsvFileTest {
 			    threadMain.await();//所有线程激活2
 			    threadMain.reset();//更新主线程
 				threadSub.await();//主线程关闭，子线程激活2  
+				System.out.println(samFile+" Mapped_Reads"+" "+matchNum);  
 				fileLog.write(samFile+" Mapped_Reads"+" "+matchNum+"\n");
 				if (i < unRnaseFileNum) {
 					unRNaseReadNum += matchNum;
@@ -470,29 +442,31 @@ public class MutTsvFileTest {
 			siteList2 = null;
 			siteArrayMap1 = null;
 			siteArrayMap2 = null;
-			circFSJMap = null;
 			
 			//整理BSJMatrix
 	        HashMap<String, Integer> circMap = new HashMap<String, Integer>();
 	        for (int i = 0; i < filePathList.size(); i++) {
 	        	circMap.clear();
 				String samFile = filePathList.get(i);
-				BufferedReader BSJBr = new BufferedReader(new FileReader(new File(samFile+"BSJ1")));	
-				String line = BSJBr.readLine();
-				while (line != null ) {					
-					String[] circLineArr = line.split("\t",7);				
-					if (circLineArr[2].equals("1")) {
-						String chrStartEnd = circLineArr[3] + ":" + circLineArr[4] + "|" + circLineArr[5];
-						if (!circMap.containsKey(chrStartEnd)) {
-							circMap.put(chrStartEnd, 1);
-						} else {
-							int temNum = circMap.get(chrStartEnd);
-							circMap.put(chrStartEnd, temNum+1);
+				AllFileSplitNum = fileSplitNumMap.get(samFile);
+				for (int j = 1; j <= AllFileSplitNum; j++) {
+					BufferedReader BSJBr = new BufferedReader(new FileReader(new File(samFile+"BSJ"+j)));	
+					String line = BSJBr.readLine();
+					while (line != null ) {					
+						String[] circLineArr = line.split("\t",7);				
+						if (circLineArr[2].equals("1")) {
+							String chrStartEnd = circLineArr[3] + "\t" + circLineArr[4] + "\t" + circLineArr[5];
+							if (!circMap.containsKey(chrStartEnd)) {
+								circMap.put(chrStartEnd, 1);
+							} else {
+								int temNum = circMap.get(chrStartEnd);
+								circMap.put(chrStartEnd, temNum+1);
+							}
 						}
+						line = BSJBr.readLine();					
 					}
-					line = BSJBr.readLine();					
-				}
-				BSJBr.close();
+					BSJBr.close();
+				}			
 				for (String circKey : circMap.keySet()) {
 					BSJmatrix[circRowMap.get(circKey)][i] = circMap.get(circKey);
 				}
@@ -504,8 +478,6 @@ public class MutTsvFileTest {
 	  		chrTCGAMap = null;
 	  		circFSJMap = null;
 	  		summary = null;
-	  		filePathList = null;
-	  		fileSplitNumMap = null;
 	        //整理矩阵输出				
 	        //输出每个样本CircRNA对应BSJnum
 	        BufferedWriter BSJCount = new BufferedWriter(new FileWriter(new File(outPutBSJCountFile)));
@@ -526,6 +498,7 @@ public class MutTsvFileTest {
 				if (circTrueIdMap.containsKey(circId)) {
 					BSJCount.write(circId);
 					FSJCount.write(circId);
+					circRNAClass.write(circId);
 					for (int j = 0; j < fileNameList.size(); j++) {
 						BSJCount.write("\t"+BSJmatrix[circRowMap.get(circKey)][j]);
 						FSJCount.write("\t"+FSJmatrix[circRowMap.get(circKey)][j]);
@@ -541,12 +514,12 @@ public class MutTsvFileTest {
 						rnaseBSJNum += BSJmatrix[circRowMap.get(circKey)][j];
 					}
 					if(unrnaseBSJNum == 0) {
-						circRNAClass.write(rnaseBSJNum+"\t"+unrnaseBSJNum+"\t"+(rnaseBSJNum/((RNaseReadNum+0.0)/1000000))+"\t"+0+"\t"+"NA"+"\n");
+						circRNAClass.write("\t"+rnaseBSJNum+"\t"+unrnaseBSJNum+"\t"+(rnaseBSJNum*2/((RNaseReadNum+0.0)/1000000))+"\t"+0+"\t"+"NA"+"\n");
 					}else {
-						double RnaseRatio = rnaseBSJNum/((RNaseReadNum+0.0)/1000000);
-						double unRnaseRatio	= unrnaseBSJNum/((unRNaseReadNum+0.0)/1000000);
+						double RnaseRatio = rnaseBSJNum*2/((RNaseReadNum+0.0)/1000000);
+						double unRnaseRatio	= unrnaseBSJNum*2/((unRNaseReadNum+0.0)/1000000);
 						double Ratio = RnaseRatio/unRnaseRatio;										
-						circRNAClass.write(rnaseBSJNum+"\t"+unrnaseBSJNum+"\t"+String.format("%.2f", RnaseRatio )+"\t"+String.format("%.2f", unRnaseRatio )
+						circRNAClass.write("\t"+rnaseBSJNum+"\t"+unrnaseBSJNum+"\t"+String.format("%.2f", RnaseRatio )+"\t"+String.format("%.2f", unRnaseRatio )
 						+"\t"+String.format("%.2f", Ratio )+"\n");						
 					}			
 				}
@@ -572,9 +545,20 @@ public class MutTsvFileTest {
 			threadMain.await();//所有线程激活2
 		} catch (Exception e) { 
 			e.printStackTrace();
-		}
-		
+		}		
 		poolExe.shutdown();
+		//删除临时文件
+ 		for (int j = 0; j < filePathList.size(); j++) {
+			String samFile = filePathList.get(j);
+			//删除sam文件
+			if (isSam){
+				new File(samFile).delete();			
+			}
+			AllFileSplitNum = fileSplitNumMap.get(samFile);
+			for (int i = 1; i <= AllFileSplitNum; i++) {
+				new File(samFile+"BSJ"+i).delete();
+			}		
+ 		}
 		long endTime = System.currentTimeMillis(); 
 		System.out.println("Program run time:" + (endTime - startTime) + "ms");
 		fileLog.write("Program run time:" + (endTime - startTime) + "ms"+"\n");

@@ -28,7 +28,6 @@ public class Summary {
 			throws IOException {
 		ArrayList<String> SummaryCircList = new ArrayList<String>();
 		HashMap<String, HashSet<String>> circMap = new HashMap<String, HashSet<String>>();
-		HashMap<String, String> standMap = new HashMap<String, String>();
 		HashSet<String> circSet = new HashSet<String>();	
 		HashMap<String, HashSet<String>> circStartMap = new HashMap<String, HashSet<String>>();
 		HashMap<String, HashSet<String>> circEndMap = new HashMap<String, HashSet<String>>();
@@ -66,6 +65,7 @@ public class Summary {
 					line = BSJBr.readLine();					
 				}
 				BSJBr.close();
+				new File(samFile+"BSJ"+i).delete();	
 			}
 		}		
 		String[] circRNAArr = null;	
@@ -306,15 +306,6 @@ public class Summary {
 			TPReads3 = circIdSet3.size();
 			FPReads3 += FPReads;
 			nonReads3 += nonReads;
-			/*if (strigency == 2 && (TPReads > 19 * FPReads || FPReads <= 1) && TPReads > nonReads + FPReads
-						&& CIGARCount[0] + CIGARCount[1] + CIGARCount[2] >= 3 && TPReads >=2) {
-						SummaryCircList.add(circRNAArr[3] + ":" + circRNAArr[4] + "|" + circRNAArr[5] + "\t" + chrStartEnd
-								+ "\t" + TPReads + "\t" + CIGARCount[0] + "_" + CIGARCount[1] + "_" + CIGARCount[2] + "\t"
-								+ circFSJNewMap.get(chrStartEnd) + "\t"
-								+ String.format("%.2f", (TPReads * 2 / (TPReads * 2 +circFSJNewMap.get(chrStartEnd) + 0.0)) ) + "\t" + circRNAArr[6]
-								+ "\t" + String.join(",", circIdSet));
-						circIdMap.put(circRNAArr[3] + ":" + circRNAArr[4] + "|" + circRNAArr[5], "");
-				//95%以上都对或者只错一个，且必须对两个以上，信号可以相同*/
 			if (strigency == 2) {						
 				if (((TPReads > 19 * FPReads || FPReads <= 1) && TPReads > nonReads + FPReads && CIGARSet.size() >= 3 && TPReads >=2) ||
 						(tag > 0 &&  falseCIGARSet3.size() == 0 && CIGARSet3.size() >= 3 && TPReads3 >=2)) {
@@ -326,7 +317,6 @@ public class Summary {
 					circIdMap.put(chrStartEndArr[0] + ":" + chrStartEndArr[1] + "|" + chrStartEndArr[2], "");
 				}
 				} else if (strigency == 1) {						
-						//circIdMap.put(circRNAArr[3] + ":" + circRNAArr[4] + "|" + circRNAArr[5], "");
 						if (((TPReads > 19 * FPReads || falseCIGARSet.size() <= 2) && TPReads > nonReads + FPReads && TPReads >= 2) ||
 								(tag > 0 &&  falseCIGARSet3.size() == 0 && TPReads3 >= 2)) {
 							SummaryCircList.add(chrStartEndArr[0] + ":" + chrStartEndArr[1] + "|" + chrStartEndArr[2] + "\t" + chrStartEnd
@@ -337,7 +327,6 @@ public class Summary {
 							circIdMap.put(chrStartEndArr[0] + ":" + chrStartEndArr[1] + "|" + chrStartEndArr[2], "");
 						}
 				} else if (strigency == 0 ) {					
-						//circIdMap.put(circRNAArr[3] + ":" + circRNAArr[4] + "|" + circRNAArr[5], "");
 						if (((TPReads > 19 * FPReads || falseCIGARSet.size() <= 2)&& TPReads > nonReads + FPReads) ||
 								tag > 0 &&  falseCIGARSet3.size() == 0  && TPReads3 >= 2) {
 							SummaryCircList.add(chrStartEndArr[0] + ":" + chrStartEndArr[1] + "|" + chrStartEndArr[2] + "\t" + chrStartEnd
@@ -348,9 +337,7 @@ public class Summary {
 							circIdMap.put(chrStartEndArr[0] + ":" + chrStartEndArr[1] + "|" + chrStartEndArr[2], "");
 						}
 				}
-		}	
-		
-		
+		}			
       return SummaryCircList;
 	}
 

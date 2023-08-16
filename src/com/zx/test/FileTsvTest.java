@@ -20,8 +20,8 @@ import com.zx.findcircrna.GetAnnotationInformation;
 import com.zx.findcircrna.ReadFaFile;
 import com.zx.findcircrna.SiteSort;
 import com.zx.findcircrna.Summary;
-import com.zx.hg19.Annotation;
-import com.zx.hg19.AnnotationIntron;
+import com.zx.hg38.Annotation;
+import com.zx.hg38.AnnotationIntron;
 
 
 
@@ -42,7 +42,6 @@ public class FileTsvTest {
 		this.mlable = mlable;
 
 	}
-
     public boolean CIRI3(String samFileTsv,String outPutFile,String annotationFile,String faFile,String UserGivecircRNA) throws IOException {	    
     	String outPutBSJCountFile = outPutFile+".BSJ_Matrix";
         String outPutFSJCountFile = outPutFile+".FSJ_Matrix";
@@ -91,7 +90,6 @@ public class FileTsvTest {
 		RF = null;
 		System.out.println(df.format(System.currentTimeMillis())+" "+":Successful import of reference genome files");  
 		fileLog.write(df.format(System.currentTimeMillis())+" "+":Successful import of reference genome files"+"\n");
-
 		
  		//第一遍扫描开始		
  		//记录哪些文件是Rnase
@@ -139,8 +137,7 @@ public class FileTsvTest {
 			
 		}
 		filePathListTem = null;
-		
-		 		
+				 		
 		//第一遍扫描开始
 		int seqLen = 0;
 		long RNaseReadNum = 0;
@@ -159,6 +156,7 @@ public class FileTsvTest {
 			scan1.findCircRNAScan1(samFile);
 			//获取匹配的reads数目
 			long matchNumTem = scan1.getReadNum();
+			System.out.println(samFile+" Mapped_Reads"+" "+matchNumTem);  
 			fileLog.write(samFile+" Mapped_Reads"+" "+matchNumTem+"\n");
 			if (j < unRnaseFileNum) {
 				unRNaseReadNum += matchNumTem;
@@ -166,8 +164,7 @@ public class FileTsvTest {
 				RNaseReadNum += matchNumTem;
 			}
 			scan1.setReadNum();
-		}
-			
+		}		
  		//获取最长read长度
 		if (seqLen < scan1.getReadLen()) {
 			seqLen = scan1.getReadLen();
@@ -175,7 +172,6 @@ public class FileTsvTest {
 		scan1 = null;
  		System.out.println(df.format(System.currentTimeMillis())+" "+":First scan completed");  
  		fileLog.write(df.format(System.currentTimeMillis())+" "+":First scan completed"+"\n");
-
  		//导入文件
 		HashMap<String, HashSet<String>> chrCircSiteMap = new HashMap<String, HashSet<String>>();
 		HashSet<String> circSiteSet = new HashSet<String>();
@@ -310,15 +306,14 @@ public class FileTsvTest {
 			scan2.findCircRNAScan2(samFile,scan1IdTotalMap.get(samFile));			
 			//FSJ
 			HashMap<String, Integer> circNewFSJMap = scan2.getCircFSJMap();
-			for (String circKey : circNewFSJMap.keySet()) {
-				FSJmatrix[circRowMap.get(circKey)][j] = circNewFSJMap.get(circKey);
-			}								
-			//取出第二遍扫描后的FSJ信息，并汇总
-			for (String circ : circNewFSJMap.keySet()) {
-				int numAll = circFSJMap.get(circ);
-				int numTem = circNewFSJMap.get(circ);
-				circFSJMap.put(circ, numAll+numTem);
-			}
+			for (String circKey : circNewFSJMap.keySet()) {				
+				//合并信息
+				int numAll = circFSJMap.get(circKey);
+				int numTem = circNewFSJMap.get(circKey);
+				circFSJMap.put(circKey, numAll+numTem);
+				//输出FSJ矩阵
+				FSJmatrix[circRowMap.get(circKey)][j] = numTem;
+			}	
 			//重置FSJ
 			scan2.setFSJScan2List();
 		}		
@@ -345,7 +340,7 @@ public class FileTsvTest {
 			while (line != null ) {					
 				String[] circLineArr = line.split("\t",7);				
 				if (circLineArr[2].equals("1")) {
-					String chrStartEnd = circLineArr[3] + ":" + circLineArr[4] + "|" + circLineArr[5];
+					String chrStartEnd = circLineArr[3] + "\t" + circLineArr[4] + "\t" + circLineArr[5];
 					if (!circMap.containsKey(chrStartEnd)) {
 						circMap.put(chrStartEnd, 1);
 					} else {
@@ -368,7 +363,6 @@ public class FileTsvTest {
   		chrTCGAMap = null;
   		circFSJMap = null;
   		summary = null;
-  		filePathList = null;
   		fileSplitNumMap = null;
         //整理矩阵输出				
         //输出每个样本CircRNA对应BSJnum
@@ -390,6 +384,7 @@ public class FileTsvTest {
 			if (circTrueIdMap.containsKey(circId)) {
 				BSJCount.write(circId);
 				FSJCount.write(circId);
+				circRNAClass.write(circId);
 				for (int j = 0; j < fileNameList.size(); j++) {
 					BSJCount.write("\t"+BSJmatrix[circRowMap.get(circKey)][j]);
 					FSJCount.write("\t"+FSJmatrix[circRowMap.get(circKey)][j]);
@@ -405,12 +400,12 @@ public class FileTsvTest {
 					rnaseBSJNum += BSJmatrix[circRowMap.get(circKey)][j];
 				}
 				if(unrnaseBSJNum == 0) {
-					circRNAClass.write(rnaseBSJNum+"\t"+unrnaseBSJNum+"\t"+(rnaseBSJNum/((RNaseReadNum+0.0)/1000000))+"\t"+0+"\t"+"NA"+"\n");
+					circRNAClass.write("\t"+rnaseBSJNum+"\t"+unrnaseBSJNum+"\t"+(rnaseBSJNum*2/((RNaseReadNum+0.0)/1000000))+"\t"+0+"\t"+"NA"+"\n");
 				}else {
-					double RnaseRatio = rnaseBSJNum/((RNaseReadNum+0.0)/1000000);
-					double unRnaseRatio	= unrnaseBSJNum/((unRNaseReadNum+0.0)/1000000);
+					double RnaseRatio = rnaseBSJNum*2/((RNaseReadNum+0.0)/1000000);
+					double unRnaseRatio	= unrnaseBSJNum*2/((unRNaseReadNum+0.0)/1000000);
 					double Ratio = RnaseRatio/unRnaseRatio;										
-					circRNAClass.write(rnaseBSJNum+"\t"+unrnaseBSJNum+"\t"+String.format("%.2f", RnaseRatio )+"\t"+String.format("%.2f", unRnaseRatio )
+					circRNAClass.write("\t"+rnaseBSJNum+"\t"+unrnaseBSJNum+"\t"+String.format("%.2f", RnaseRatio )+"\t"+String.format("%.2f", unRnaseRatio )
 					+"\t"+String.format("%.2f", Ratio )+"\n");						
 				}			
 			}
@@ -433,6 +428,11 @@ public class FileTsvTest {
 		}		
 		System.out.println(df.format(System.currentTimeMillis())+" "+":Collation of circRNA completed"); 
 		fileLog.write(df.format(System.currentTimeMillis())+" "+":Collation of circRNA completed"+"\n");
+		//删除临时文件
+ 		for (int j = 0; j < filePathList.size(); j++) {
+			String samFile = filePathList.get(j);
+			new File(samFile+"BSJ1").delete();
+ 		}
 		long endTime = System.currentTimeMillis(); 
 		System.out.println("Program run time:" + (endTime - startTime) + "ms");
 		fileLog.write("Program run time:" + (endTime - startTime) + "ms"+"\n");

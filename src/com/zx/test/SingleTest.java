@@ -22,8 +22,8 @@ import com.zx.findcircrna.ReadFaFile;
 import com.zx.findcircrna.SiteSort;
 import com.zx.findcircrna.Summary;
 import com.zx.findcircrna.UserFindCircRNAScan2;
-import com.zx.hg19.Annotation;
-import com.zx.hg19.AnnotationIntron;
+import com.zx.hg38.Annotation;
+import com.zx.hg38.AnnotationIntron;
 
 public class SingleTest {
 	
@@ -89,7 +89,9 @@ public class SingleTest {
 		RF = null;
 		System.out.println(df.format(System.currentTimeMillis())+" "+":Successful import of reference genome files");  
 		fileLog.write(df.format(System.currentTimeMillis())+" "+":Successful import of reference genome files"+"\n");
+		
 		int seqLen = 0;
+		//存储候选的BSJ位置信息
 		HashMap<String, HashSet<String>> chrCircSiteMap = new HashMap<String, HashSet<String>>();
 		HashSet<String> circSiteSet = new HashSet<String>();
 		HashMap<String, String> scan1IdMap = new HashMap<String, String>();
@@ -111,10 +113,12 @@ public class SingleTest {
 			//获取最长read长度
 			seqLen = scan1.getReadLen();
 			//获取匹配的reads数目
-			fileLog.write("Mapped_Reads"+" "+scan1.getReadNum()+"\n");
-			scan1 = null;
+			System.out.println(df.format(System.currentTimeMillis())+" "+":Mapped_Reads "+scan1.getReadNum());  
+			fileLog.write(df.format(System.currentTimeMillis())+" "+":Mapped_Reads "+scan1.getReadNum()+"\n");
 			System.out.println(df.format(System.currentTimeMillis())+" "+":First scan completed");
 			fileLog.write(df.format(System.currentTimeMillis())+" "+":First scan completed"+"\n");
+			//第一遍扫描完毕
+			scan1 = null;
 			//导入文件			
 			BufferedReader BSJbr = new BufferedReader(new FileReader(new File(samFile+"BSJ1")));
 			String line = BSJbr.readLine();
@@ -138,8 +142,7 @@ public class SingleTest {
 			GetUserCircRNA guc = new GetUserCircRNA();
 			chrCircSiteMap = guc.summaryUserCircRNA(UserGivecircRNA, chrTCGAMap);
 			seqLen = 500;
-		}
-		
+		}	
 		//制作索引，根据chr分组构建
 		seqLen = seqLen-12;		
 		HashMap<String, Integer> circFSJMap = new HashMap<String, Integer>();
@@ -252,8 +255,6 @@ public class SingleTest {
 		chrTCGAMap = null;
 		circFSJNewMap = null;
 		summary = null;
-		//new File(samFile+"BSJ1").delete();
-	
 		//注释circRNA		
 		if (intronLable) {
 			AnnotationIntron annotation = new AnnotationIntron();
@@ -276,10 +277,21 @@ public class SingleTest {
         		scan2.findCircRNAScan2(samFile,scan1IdMap);
     		}	
     		HashMap<String, Integer> circFSJNewMap = scan2.getCircFSJMap();
-    		HashMap<String, Integer> circBSJNewMap = scan2.getCircFSJMap();
+    		HashMap<String, Integer> circBSJNewMap = scan2.getCircBSJMap();
     		//获取匹配的reads数目
-			fileLog.write("Mapped_Reads"+" "+scan2.getReadNum()+"\n");
+    		System.out.println(df.format(System.currentTimeMillis())+" "+":Mapped_Reads "+scan2.getReadNum());  
+			fileLog.write(df.format(System.currentTimeMillis())+" "+":Mapped_Reads "+scan2.getReadNum()+"\n");
 			scan2 = null;
+			chrSiteMap1 = null;
+			SiteMap1 = null;
+			siteList1 = null;
+			chrSiteMap2 = null;
+			SiteMap2 = null;
+			siteList2 = null;
+			siteArrayMap1 = null;
+			siteArrayMap2 = null;
+			circFSJMap = null;
+			scan1IdMap = null;
 			System.out.println(df.format(System.currentTimeMillis())+" "+":Scan completed");
 			fileLog.write(df.format(System.currentTimeMillis())+" "+":Scan completed"+"\n");  		
     		BufferedWriter BSJBw = new BufferedWriter(new FileWriter(new File(outPutBSJCountFile)));
@@ -292,7 +304,11 @@ public class SingleTest {
 			}
     		BSJBw.close();
     		FSJBw.close();
+    		circBSJNewMap = null;
+    		circFSJNewMap = null;
 		}
+        //删除文件
+        new File(samFile+"BSJ1").delete();
         long endTime = System.currentTimeMillis(); 
 		System.out.println("Program run time:" + (endTime - startTime) + "ms");
 		fileLog.write("Program run time:" + (endTime - startTime) + "ms"+"\n");

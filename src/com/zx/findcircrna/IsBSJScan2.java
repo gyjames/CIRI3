@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 
-import com.zx.hg19.IsBSJHg2;
+import com.zx.hg38.IsBSJHg2;
 
 public class IsBSJScan2 {
 	Misd misd = new Misd();

@@ -72,8 +72,7 @@ public class IsBSJHg2 {
 						//先用Smithwaterman	1~10错一个 11~20错两个					
 						aligner.setSeq(circ_range_seq.substring(circRangeLen-len_str,circRangeLen),str);
 						aligner.getAlignment();
-						//if (aligner.getAlignmentScore() >= len_str -2-(len_str-3)/10*2) {
-						if (aligner.getAlignmentScore() >= len_str-(len_str-2)/10*2) {
+						if (aligner.getAlignmentScore() >= len_str - 4 -(len_str-3)/10*2) {
 							if (quant >= minMapqUni) {
 								initial_seq = str.substring(len_str-initial_size1,len_str);
 								if (circ_range_seq.substring(circRangeLen-initial_size1,circRangeLen).equals(initial_seq)) {								
@@ -147,8 +146,7 @@ public class IsBSJHg2 {
 						//先用Smithwaterman	1~10错一个 11~20错两个					
 						aligner.setSeq(circ_range_seq.substring(0,len_str),str);
 						aligner.getAlignment();
-						//if (aligner.getAlignmentScore() >= len_str -2-(len_str-3)/10*2) {
-						if (aligner.getAlignmentScore() >= len_str  - (len_str-2)/10*2) {
+						if (aligner.getAlignmentScore() >= len_str - 4 -(len_str-3)/10*2) {
 							initial_seq = str.substring(0,initial_size1);
 							if (circ_range_seq.substring(0,initial_size1).equals(initial_seq)) {								
 								 int tag = IIC1_2.isInCircRNA1_2(len_str, str, circ_range_seq, linear_range);	
