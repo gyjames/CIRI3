@@ -1,7 +1,5 @@
 # CIRI3
 
-
-
 ## About
 
 CIRI3 is a comprehensive analysis package for the detection and quantification of circRNAs in RNA-Seq data, while providing differential expression analysis of circRNAs at multiple levels.
