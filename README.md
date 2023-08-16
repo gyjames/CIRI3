@@ -38,7 +38,7 @@ A small test data set is provided in [test_data/test_data_espresso_sirv.tar.gz](
 CIRI3 will give information about circRNAs in the sample.
 ```
 # without the annotation gtf
-Java -jar CIRI3.jar -I ./data/circRNA/single/sample.sam -O ./data/circRNA/single/result.txt -F ./data/circRNA/ref.fa
+java -jar CIRI3.jar -I ./data/circRNA/Single/sample.sam -O ./data/circRNA/Single/result.txt -F ./data/circRNA/ref.fa
 
 # with the annotation gtf
 Java -jar CIRI3.jar -I sample.sam -O result.txt -F ref.fa -A ref.gtf
@@ -51,7 +51,7 @@ Java -jar CIRI3.jar -I sample.sam -O result.txt -F ref.fa -A ref.gtf
 CIRI3 will give information about circRNA in the samples, circRNA BSJ expression matrix and circRNA FSJ expression matrix.
 ```
 # without the annotation gtf
-Java -jar CIRI3.jar -I ./data/circRNA/Mutiple/sample_infor.tsv -O ./data/circRNA/Mutiple/result.txt -F ./data/circRNA/ref.fa -W 1
+java -jar CIRI3.jar -I ./data/circRNA/Mutiple/sample_infor.tsv -O ./data/circRNA/Mutiple/result.txt -F ./data/circRNA/ref.fa -W 1
 
 # with the annotation gtf
 Java -jar CIRI3.jar -I sample_infor.tsv -O result.txt -F ref.fa -A ref.gtf -W 1
@@ -69,7 +69,7 @@ Java -jar CIRI3.jar -I sample_infor.tsv -O result.txt -F ref.fa -A ref.gtf -W 1
 CIRI3 gives information on circRNAs in the samples, circRNA BSJ expression matrix, circRNA FSJ expression matrix and circRNA enrichment ratios.
 ```
 # without the annotation gtf
-Java -jar CIRI3.jar -I .data/circRNA/RNase/sample_infor.tsv -O ./data/circRNA/RNase/result.txt -F ./data/circRNA/ref.fa -W 2
+java -jar CIRI3.jar -I ./data/circRNA/RNase/sample_infor.tsv -O ./data/circRNA/RNase/result.txt -F ./data/circRNA/ref.fa -W 2
 
 # with the annotation gtf
 Java -jar CIRI3.jar -I sample_infor.tsv -O result.txt -F ref.fa -A ref.gtf -W 2
@@ -87,7 +87,7 @@ Java -jar CIRI3.jar -I sample_infor.tsv -O result.txt -F ref.fa -A ref.gtf -W 2
 #### 4)CircRNA collections of interest and sam/bam files as inputs
 CIRI3 will give the BSJ expression matrix and FSJ expression matrix of the input circRNA collection in the sample.
 ```
-Java -jar CIRI3.jar -I ./data/circRNA/User/sample.sam -UC ./data/circRNA/User/circRNA_List.txt -O ./data/circRNA/User/result.txt -F ./data/circRNA/ref.fa
+java -jar CIRI3.jar -I ./data/circRNA/User/sample.sam -UC ./data/circRNA/User/circRNA_List.txt -O ./data/circRNA/User/result.txt -F ./data/circRNA/ref.fa
 ```
 
 * circRNA_List.txt is a tab separated file like:
@@ -137,7 +137,7 @@ chr9:33318731|33338589	0	6
 ```
 java -jar CIRI3.jar DE_BSJ -I ./data/DE/BSJ/With_RE/infor.tsv -G ./data/DE/BSJ/With_RE/Gene_Expression.txt -O ./data/DE/BSJ/With_RE/result.txt
 
-java -jar CIRI3.jar DE_BSJ -I ./data/DE/BSJ/With_RE/infor.tsv -G ./data/DE/BSJ/With_RE/Gene_Expression.txt -M ./data/DE/BSJ/With_RE/BSJ_Matrix.txt -O ./data/DE/BSJ/yes/result.txt
+java -jar CIRI3.jar DE_BSJ -I ./data/DE/BSJ/With_RE/infor.tsv -G ./data/DE/BSJ/With_RE/Gene_Expression.txt -M ./data/DE/BSJ/With_RE/BSJ_Matrix.txt -O ./data/DE/BSJ/With_RE/result.txt
 ```
 
 * infor.tsv is a tab separated file like:
@@ -189,7 +189,7 @@ chr1:18854213|18857631	5	6	0	0
 ```
 java -jar CIRI3.jar DE_Relative -I ./data/DE/Relative_Expression/infor.tsv -O ./data/DE/Relative_Expression/result.txt
 
-java -jar CIRI3.jar DE_Relative -I ./data/DE/Relative_Expression/infor.tsv -M ./data/DE/Relative_Expression/BSJ_Matrix.txt -GC ./data/DE/relative_expression/circ_Gene.txt -O ./data/DE/relative_expression/result1.txt
+java -jar CIRI3.jar DE_Relative -I ./data/DE/Relative_Expression/infor.tsv -M ./data/DE/Relative_Expression/BSJ_Matrix.txt -GC ./data/DE/Relative_Expression/circ_Gene.txt -O ./data/DE/Relative_Expression/result.txt
 ```
 
 * infor.tsv is a tab separated file like:
