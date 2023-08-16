@@ -1,8 +1,6 @@
 # CIRI3
 
-[![Latest Release](https://img.shields.io/github/release/Xinglab/espresso.svg?label=Latest%20Release)](https://github.com/Xinglab/espresso/releases/latest)
-[![Total GitHub Downloads](https://img.shields.io/github/downloads/Xinglab/espresso/total.svg?label=Total%20GitHub%20Downloads)](https://github.com/Xinglab/espresso/releases)
-[![Total Bioconda Installs](https://img.shields.io/conda/dn/bioconda/espresso.svg?label=Total%20Bioconda%20Installs)](https://anaconda.org/bioconda/espresso)
+
 
 ## About
 
@@ -32,7 +30,7 @@ bwa mem –T 19 ref.fa read1.fq read2.fq > sample.sam (paired-end reads)
 
 CIRI3 provides multiple input options for the identification and quantification of circRNAs, including single-sample input, multiple-sample input, multiple-sample files containing RNase R treated information. In addition, users have the option to input a collection of circRNAs of interest, allowing CIRI3 to quantify the BSJ and FSJ of these circRNAs within the samples.
 
-A small test data set is provided in [test_data/test_data_espresso_sirv.tar.gz](test_data/test_data_espresso_sirv.tar.gz). The unpacked files are:
+A small test data set is provided in [data/](data/). The unpacked files are:
 
 #### 1)Single-SAM/BAM files as input
 CIRI3 will give information about circRNAs in the sample.
