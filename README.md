@@ -8,7 +8,7 @@ CIRI3 is a comprehensive analysis package for the detection and quantification o
 
 The CIRI3 was constructed based on java. The `environment.yaml` was provided and the dependencies can be installed as the follow:
 ```
-git clone https://github.com/gyjames/CIRIdeep.git
+git clone https://github.com/gyjames/CIRI3.git
 cd CIRI3
 conda env create -n CIRI3 -f ./environment.yaml
 conda activate CIRI3
