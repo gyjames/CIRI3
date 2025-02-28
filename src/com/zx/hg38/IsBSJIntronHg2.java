@@ -53,6 +53,9 @@ public class IsBSJIntronHg2 extends IsBSJHg2{
                     	linear_range = chrTAGA.substring(0, startSite-1);
 					}										
 				}
+				if(circRangeLen < len_str) {
+					return "2";
+				}
 				aligner.setSeq(circ_range_seq.substring(circRangeLen-len_str,circRangeLen),str);
 				String[] alignment = aligner.getAlignment();
 				if (aligner.getAlignmentScore()>=len_str-2*(Initial+len_str/10) && alignment[1].length() >= len_str -2) {
@@ -113,6 +116,9 @@ public class IsBSJIntronHg2 extends IsBSJHg2{
                     }else {
                     	linear_range = chrTAGA.substring(endSite,endSite+linear_range_size_min);
 					}									
+				}
+				if(circ_range_seq.length() < len_str) {
+					return "2";
 				}
 				aligner.setSeq(circ_range_seq.substring(0,len_str),str);
 				String[] alignment = aligner.getAlignment();

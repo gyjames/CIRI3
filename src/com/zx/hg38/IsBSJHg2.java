@@ -69,7 +69,10 @@ public class IsBSJHg2 {
 	                        	linear_range = chrTAGA.substring(0, startSite-1);
 							}										
 						}						
-						//先用Smithwaterman	1~10错一个 11~20错两个					
+						//先用Smithwaterman	1~10错一个 11~20错两个	
+						if(circRangeLen < len_str) {
+							return "2";
+						}
 						aligner.setSeq(circ_range_seq.substring(circRangeLen-len_str,circRangeLen),str);
 						aligner.getAlignment();
 						//if (aligner.getAlignmentScore() >= len_str -2-(len_str-3)/10*2) {
@@ -144,7 +147,10 @@ public class IsBSJHg2 {
 	                        	linear_range = chrTAGA.substring(endSite,endSite+linear_range_size_min);
 							}									
 						}
-						//先用Smithwaterman	1~10错一个 11~20错两个					
+						//先用Smithwaterman	1~10错一个 11~20错两个		
+						if(circ_range_seq.length() < len_str) {
+							return "2";
+						}
 						aligner.setSeq(circ_range_seq.substring(0,len_str),str);
 						aligner.getAlignment();
 						//if (aligner.getAlignmentScore() >= len_str -2-(len_str-3)/10*2) {
