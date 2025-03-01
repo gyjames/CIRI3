@@ -97,7 +97,7 @@ chr1	1384101	1397537
 
 ### Step3. Differential Expression Analysis
 
-CIRI3 provides three levels of differential expression analysis algorithms, including the expression of a single circRNA, the junction ratio of a single circRNA, and the relative expression of multiple circRNAs derived from a single gene.
+CIRI3 provides three levels of differential expression analysis algorithms, including the expression of a single circRNA, the junction ratio of a single circRNA, and the relative expression of multiple circRNAs derived from a single gene. The entire differential expression analysis script incorporates parts of the code from the edgeR package in R or rMATS to calculate the statistical significance of differential expression (p-values).
 
 #### 1)the expression of a single circRNA
 
@@ -149,7 +149,7 @@ Control1	path/to/control1_CIRI3.txt	Control	1
 Control2	path/to/control2_CIRI3.txt	Control	2
 ```
 
-* Gene_Expression.txt is a tab separated file like:
+* Gene_Expression.txt is a tab separated file like Gene_Expression.txt is a tab separated file like (which can be obtained by running featureCounts on a BWA-aligned and sorted BAM files):
 ```
 Geneid	Case1	Case2	Control1	Control2
 ENSG00000236875.3	14	4	13	4
@@ -180,7 +180,7 @@ chr5:171214|173067	15	0	12	0
 chr1:18854213|18857631	5	6	0	0
 ```
 
-#### 3)he relative expression of multiple circRNAs derived from a single gene(Input in two ways)
+#### 3)the relative expression of multiple circRNAs derived from a single gene(Input in two ways)
 
 ```
 java -jar CIRI3.jar DE_Relative -I ./data/DE/Relative_Expression/infor.tsv -O ./data/DE/Relative_Expression/result.txt
@@ -352,3 +352,6 @@ The three main output files are:
 ## References
 
 1. Li, Heng. "Aligning sequence reads, clone sequences and assembly contigs with BWA-MEM." arXiv preprint arXiv:1303.3997 (2013).
+2. Shen S, Park JW, Lu ZX, et al. rMATS: robust and flexible detection of differential alternative splicing from replicate RNA-Seq data. Proc Natl Acad Sci U S A. 2014;111(51):E5593-E5601. doi:10.1073/pnas.1419161111
+3. Robinson MD, McCarthy DJ, Smyth GK. edgeR: a Bioconductor package for differential expression analysis of digital gene expression data. Bioinformatics. 2010;26(1):139-140. doi:10.1093/bioinformatics/btp616
+4. Liao Y, Smyth GK, Shi W. featureCounts: an efficient general purpose program for assigning sequence reads to genomic features. Bioinformatics. 2014;30(7):923-930. doi:10.1093/bioinformatics/btt656
