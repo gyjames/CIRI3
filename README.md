@@ -341,6 +341,7 @@ The three main output files are:
   + Column 10: ID of the gene(s) where an exonic or intronic circRNA locates
   + Column 11: strand info of a predicted circRNAs (new in CIRI2)
   + Column 12: all of the circular junction read IDs (split by ",")
+  + Column 13: the count of high-quality BSJ reads from the first scan
 * `result.txt.BSJ_Matrix` is a BSJ expression matrix file for predicted circRNA.
   + Each detected isoform is reported on a separate line.
 * `result.txt.BSJ_Matrix` is a FSJ expression matrix file for predicted circRNA.
