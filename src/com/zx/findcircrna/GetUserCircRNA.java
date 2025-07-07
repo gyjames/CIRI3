@@ -9,7 +9,7 @@ import java.util.HashSet;
 
 public class GetUserCircRNA {
 	HashMap<String, HashSet<String>> chrCircSiteMap = new HashMap<String, HashSet<String>>();
-   
+    
 	public HashMap<String, HashSet<String>> summaryUserCircRNA(String UserGivecircRNA, HashMap<String, String> chrTCGAMap) throws IOException {
 		HashMap<String, HashSet<String>> chrCircSiteMap = new HashMap<String, HashSet<String>>();
 		HashSet<String> circSiteSet = new HashSet<String>();

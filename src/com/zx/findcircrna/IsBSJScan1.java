@@ -18,7 +18,7 @@ public class IsBSJScan1 {
 	public IsBSJScan1(int minMapqUni, int maxCircle, int minCircle,int linear_range_size_min,boolean intronLable,
 			HashMap<String, String> chrExonStartMap,HashMap<String, String> chrExonEndMap,HashMap<String, String> chrTCGAMap,
 			HashMap<String, ArrayList<String>> chrExonStartTranscriptMap,HashMap<String, ArrayList<String>> chrExonEndTranscriptMap,String mitochondrion,
-			boolean mlable) {
+			boolean mlable,boolean spLable) {
 		super();
 		this.minMapqUni = minMapqUni;
 		this.maxCircle = maxCircle;
@@ -27,9 +27,9 @@ public class IsBSJScan1 {
 		this.mitochondrion = mitochondrion;	
 		this.mlable = mlable;	
 		if (intronLable) {
-			isBSJHg1 = new IsBSJIntronHg1(linear_range_size_min, chrExonStartMap, chrExonEndMap,chrExonStartTranscriptMap,chrExonEndTranscriptMap,mitochondrion);
+			isBSJHg1 = new IsBSJIntronHg1(linear_range_size_min, chrExonStartMap, chrExonEndMap,chrExonStartTranscriptMap,chrExonEndTranscriptMap,mitochondrion,spLable);
 		}else {
-			isBSJHg1 = new IsBSJHg1(linear_range_size_min, chrExonStartMap, chrExonEndMap,chrExonStartTranscriptMap,chrExonEndTranscriptMap,mitochondrion);
+			isBSJHg1 = new IsBSJHg1(linear_range_size_min, chrExonStartMap, chrExonEndMap,chrExonStartTranscriptMap,chrExonEndTranscriptMap,mitochondrion,spLable);
 		}		
 	}
 	

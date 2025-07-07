@@ -65,7 +65,7 @@ public class Summary {
 					line = BSJBr.readLine();					
 				}
 				BSJBr.close();
-				new File(samFile+"BSJ"+i).delete();	
+				//new File(samFile+"BSJ"+i).delete();	
 			}
 		}		
 		String[] circRNAArr = null;	
@@ -92,7 +92,7 @@ public class Summary {
 						    }
 							String[] CIGARArr = circRNAArr[1].split(";");
 							String temCIGAR = CIGARArr[1].replaceAll("[^(a-zA-Z)]", "");
-							String[] CIGARNumArr = CIGARArr[1].split("S|M|D|I");
+							String[] CIGARNumArr = CIGARArr[1].split("S|M|D|I|N");
 							int matchNum = 0;
 							for (int k = temCIGAR.indexOf("M"); k <= temCIGAR.lastIndexOf("M"); k++) {
 								if(temCIGAR.substring(k,k+1).equals("M") || temCIGAR.substring(k,k+1).equals("D")) {
@@ -177,7 +177,7 @@ public class Summary {
 						    }
 							String[] CIGARArr = circRNAArr[1].split(";");
 							String temCIGAR = CIGARArr[0].replaceAll("[^(a-zA-Z)]", "");
-							String[] CIGARNumArr = CIGARArr[0].split("S|M|D|I");
+							String[] CIGARNumArr = CIGARArr[0].split("S|M|D|I|N");
 							int matchNum = 0;
 							for (int k = temCIGAR.indexOf("M"); k <= temCIGAR.lastIndexOf("M"); k++) {
 								if(temCIGAR.substring(k,k+1).equals("M") || temCIGAR.substring(k,k+1).equals("D")) {

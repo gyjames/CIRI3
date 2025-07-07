@@ -6,6 +6,7 @@ import java.util.HashMap;
 public class IsBSJHg1 {
 	int linear_range_size_min,initial_size1 = 5 + 2;
 	String mitochondrion;
+	boolean spLable;
 	IsInCircRNA1_2 IIC1_2 = new IsInCircRNA1_2();
 	IsInCircRNA2 IIC2 = new IsInCircRNA2();
 	IsInCircRNA3 IIC3 = new IsInCircRNA3();
@@ -15,12 +16,13 @@ public class IsBSJHg1 {
 	String[] str_new = new String[2];
 	public IsBSJHg1(int linear_range_size_min,HashMap<String, String> chrExonStartMap,HashMap<String, String> chrExonEndMap,
 			HashMap<String, ArrayList<String>> chrExonStartTranscriptMap,HashMap<String, ArrayList<String>> chrExonEndTranscriptMap,
-			String mitochondrion) {
+			String mitochondrion,boolean spLable) {
 		super();
 		this.linear_range_size_min = linear_range_size_min;
 		this.chrExonStartMap = chrExonStartMap;
 		this.chrExonEndMap = chrExonEndMap;
 		this.mitochondrion = mitochondrion;
+		this.spLable = spLable;
 	}
 	public String isBSJHg1(String circLineArr[], String chrTAGA,int sumQ){
 			String end_string1, end_string2, str_adjustment, initial_seq1, initial_seq2,
@@ -77,7 +79,7 @@ public class IsBSJHg1 {
 				// Pass end strings to index_compare to find possible splicing signals and the
 				// corresponding strand	
 				HashMap<Integer, String> indexStrandMap;
-				if (circLineArr[1].equals(mitochondrion)) {
+				if (circLineArr[1].equals(mitochondrion) || spLable) {
 					indexStrandMap = indexCompare.indexCompareChrM(end_string1, end_string2);
 				}else {
 					indexStrandMap = indexCompare.indexCompare(end_string1, end_string2);

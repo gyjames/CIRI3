@@ -30,9 +30,10 @@ import com.zx.hg38.AnnotationIntron;
 
 public class MutTsvFileTest {
 	private int minMapqUni,maxCircle,minCircle,linear_range_size_min,strigency,relExp;
-	private boolean intronLable,mlable,isSam;
+	private boolean intronLable,mlable,isSam,spLable;
 	private String mitochondrion;
-	public MutTsvFileTest(int minMapqUni, int maxCircle, int minCircle,int linear_range_size_min,boolean intronLable,int strigency,int relExp,String mitochondrion,boolean mlable) {
+	public MutTsvFileTest(int minMapqUni, int maxCircle, int minCircle,int linear_range_size_min,boolean intronLable,int strigency,int relExp,String mitochondrion
+			,boolean mlable,boolean spLable) {
 		super();
 		this.minMapqUni = minMapqUni;
 		this.maxCircle = maxCircle;
@@ -43,6 +44,7 @@ public class MutTsvFileTest {
 		this.relExp = relExp;
 		this.mitochondrion = mitochondrion;
 		this.mlable = mlable;
+		this.spLable = spLable;
 	}		
 	public static String samFile;	
 	public static int seqLen = 0,AllFileSplitNum;
@@ -83,7 +85,7 @@ public class MutTsvFileTest {
 						//第一遍扫描									
 				 		//存放每个sam文件第一遍扫描circRNA的ID Num						
 						MutFindCircRNAScan1 scan1 = new MutFindCircRNAScan1(minMapqUni,maxCircle,minCircle,linear_range_size_min,intronLable,chrExonStartMap,
-								chrExonEndMap,chrTCGAMap,chrExonStartTranscriptMap,chrExonEndTranscriptMap,mitochondrion,mlable);						
+								chrExonEndMap,chrTCGAMap,chrExonStartTranscriptMap,chrExonEndTranscriptMap,mitochondrion,mlable,spLable);						
 				 		for (int j = 0; j < filePathList.size()-1; j++) {
 				 			while(true) {
 								int threadNum= incr.getAndIncrement();

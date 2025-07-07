@@ -38,7 +38,7 @@ public class BamUserFindCircRNAScan2  extends UserFindCircRNAScan2  {
 	    	String temid =record.getReadName();//simulate:1	        
 	        String chr = record.getContig();//chr1
 	        int start = record.getStart();//188535796
-	        int MQ = record.getAlignmentStart();//60
+	        int MQ = record.getMappingQuality();//60
 	        String cigar = record.getCigarString();//63H37M  
 			if(record.getFirstOfPairFlag()) {
 				readKey = 1;
@@ -50,6 +50,9 @@ public class BamUserFindCircRNAScan2  extends UserFindCircRNAScan2  {
 	        }else {
 	        	standKey = 0;
 	        }
+			if(chr == null) {
+				chr = "*";
+			}
 			String[] serveInfor = {standKey+"",chr,start+"",MQ+"",cigar};		
 			if (!id.equals(temid)) {
 				//判断是否匹配上

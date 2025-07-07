@@ -1,4 +1,5 @@
 package com.zx.test;
+
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -19,21 +20,25 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import com.zx.findcircrna.BamToSam;
 import com.zx.findcircrna.GetAnnotationInformation;
+import com.zx.findcircrna.GetChimericOut;
 import com.zx.findcircrna.GetUserCircRNA;
-import com.zx.findcircrna.MutFindCircRNAScan1;
+import com.zx.findcircrna.MutFindCircRNASTARScan1;
+import com.zx.findcircrna.MutFindCircRNASTARScan2;
 import com.zx.findcircrna.MutFindCircRNAScan2;
+import com.zx.findcircrna.MutUserFindCircRNASTARScan2;
 import com.zx.findcircrna.MutUserFindCircRNAScan2;
 import com.zx.findcircrna.ReadFaFile;
 import com.zx.findcircrna.SiteSort;
 import com.zx.findcircrna.Summary;
 import com.zx.hg38.Annotation;
 import com.zx.hg38.AnnotationIntron;
-public class MutTest {
+
+public class MutSTARTest {
 	private int minMapqUni,maxCircle,minCircle,linear_range_size_min,strigency,relExp,seqLen = 0,AllFileSplitNum = 10;;
 	private long matchNum = 0;
 	private boolean intronLable,mlable,spLable;
 	private String mitochondrion,UserGivecircRNAG;
-	public MutTest(int minMapqUni, int maxCircle, int minCircle,int linear_range_size_min,boolean intronLable,int strigency,int relExp,String mitochondrion
+	public MutSTARTest(int minMapqUni, int maxCircle, int minCircle,int linear_range_size_min,boolean intronLable,int strigency,int relExp,String mitochondrion
 			,boolean mlable,boolean spLable) {
 		super();
 		this.minMapqUni = minMapqUni;
@@ -47,10 +52,11 @@ public class MutTest {
 		this.mlable = mlable;
 		this.spLable = spLable;
 	}
-	public static String samFile;
+	public static String bwaSamFile,starSamFile;
 	private static Lock lock = new ReentrantLock();
 	private static HashMap<String, Integer> circFSJMap,circBSJMap;
 	private static HashMap<String, String> chrTCGAMap;
+	private static HashMap<String, String> idCircMap;
 	HashMap<String, String> chrExonStartMap = new HashMap<String, String>(),chrExonEndMap = new HashMap<String, String>();
 	HashMap<String, ArrayList<String>> chrExonStartTranscriptMap = new HashMap<String, ArrayList<String>>(),
 			chrExonEndTranscriptMap = new HashMap<String, ArrayList<String>>();
@@ -65,12 +71,28 @@ public class MutTest {
 		BufferedWriter fileLog = new BufferedWriter(new FileWriter(new File(outputFileLog)));
 		System.out.println(df.format(System.currentTimeMillis())+" "+":CIRI3 start"); 
 		fileLog.write(df.format(System.currentTimeMillis())+" "+":CIRI3 start"+"\n");
-		if (inputFile.substring(inputFile.length()-3,inputFile.length()).equals("sam")) {
-			samFile = inputFile;
-		}else if (inputFile.substring(inputFile.length()-3,inputFile.length()).equals("bam")){
-			samFile = inputFile.substring(0,inputFile.length()-3)+"sam";
+	    //输入文件
+        String[] samFileArr = inputFile.split(",");
+		String chimericPath = samFileArr[0];
+		String starSamPath = samFileArr[1];
+		String unmappedSamPath = samFileArr[2];
+		
+		if (unmappedSamPath.substring(unmappedSamPath.length()-3,unmappedSamPath.length()).equals("sam")) {
+			bwaSamFile = unmappedSamPath;
+		}else if (unmappedSamPath.substring(unmappedSamPath.length()-3,unmappedSamPath.length()).equals("bam")){
+			bwaSamFile = unmappedSamPath.substring(0,unmappedSamPath.length()-3)+"sam";
 			BamToSam bts = new BamToSam();
-			bts.bamToBam(inputFile, samFile);
+			bts.bamToBam(unmappedSamPath, bwaSamFile);
+		}else {
+			System.out.println("Please enter the file that ends with sam or bam");
+			return false;
+		}
+		if (starSamPath.substring(starSamPath.length()-3,starSamPath.length()).equals("sam")) {
+			starSamFile = starSamPath;
+		}else if (starSamPath.substring(starSamPath.length()-3,starSamPath.length()).equals("bam")){
+			starSamFile = starSamPath.substring(0,starSamPath.length()-3)+"sam";
+			BamToSam bts = new BamToSam();
+			bts.bamToBam(starSamPath, starSamFile);
 		}else {
 			System.out.println("Please enter the file that ends with sam or bam");
 			return false;
@@ -89,54 +111,42 @@ public class MutTest {
 					try {
 						threadMain.await();
 						if (UserGivecircRNAG.equals("")) {
-							//第一遍扫描						
-							MutFindCircRNAScan1 scan1 = new MutFindCircRNAScan1(minMapqUni,maxCircle,minCircle,linear_range_size_min,intronLable,chrExonStartMap,
+							//第一遍扫描	
+							MutFindCircRNASTARScan1 scan1 = new MutFindCircRNASTARScan1(minMapqUni,maxCircle,minCircle,linear_range_size_min,intronLable,chrExonStartMap,
 									chrExonEndMap,chrTCGAMap,chrExonStartTranscriptMap,chrExonEndTranscriptMap,mitochondrion,mlable,spLable);
 							while(true) {
 								int threadNum= incr.getAndIncrement();
 								if (threadNum > AllFileSplitNum) {
 									break;
 								}else {
-									scan1.findCircRNAScan1(samFile,AllFileSplitNum,threadNum);								
+									scan1.findCircRNAScan1(bwaSamFile,AllFileSplitNum,threadNum,idCircMap);								
 									System.out.println(df.format(System.currentTimeMillis())+" "+":First scan completed "+threadNum); 
 									fileLog.write(df.format(System.currentTimeMillis())+" "+":First scan completed "+threadNum+"\n");								
 								}
 							}
 							//获取最长read长度
 							int seqLenTem = scan1.getReadLen();
-							long matchNumTem = scan1.getReadNum();
 							//合并信息
 							lock.lock();
 							if(seqLenTem>seqLen) {
 								seqLen = seqLenTem;
-							}
-							matchNum = matchNum + matchNumTem;				
+							}		
 							lock.unlock();
 							scan1 = null;
 							threadSub.await();
 							threadMain.await();
+							
 							//第二遍扫描
 							MutFindCircRNAScan2 scan2 = new MutFindCircRNAScan2(minMapqUni,circFSJMap,linear_range_size_min,siteArrayMap1,siteArrayMap2,chrSiteMap1,chrSiteMap2,
 				    				chrTCGAMap,seqLen,intronLable);  
-							HashMap<String, String> scan1IdMap = new HashMap<String, String>();
 							while(true) {
 								int threadNum= incr.getAndIncrement();
 								if (threadNum > AllFileSplitNum) {
 									break;
 								}else {
-									//提取ID
-									scan1IdMap.clear();	
-									BufferedReader BSJbr = new BufferedReader(new FileReader(new File(samFile+"BSJ"+threadNum)));
-									String line = BSJbr.readLine();
-									while (line != null) {
-										String[] BSJArr = line.split("\t",2);
-										scan1IdMap.put(BSJArr[0], "");
-										line = BSJbr.readLine();
-									}
-									BSJbr.close();		
-									scan2.findCircRNAScan2(samFile,scan1IdMap,AllFileSplitNum,threadNum);														
-									System.out.println(df.format(System.currentTimeMillis())+" "+":Second scan completed "+threadNum);  
-									fileLog.write(df.format(System.currentTimeMillis())+" "+":Second scan completed "+threadNum+"\n");															
+									scan2.findCircRNAScan2(bwaSamFile,idCircMap,AllFileSplitNum,threadNum);														
+									System.out.println(df.format(System.currentTimeMillis())+" "+":unmapSam Second scan completed "+threadNum);  
+									fileLog.write(df.format(System.currentTimeMillis())+" "+":unmapSam Second scan completed "+threadNum+"\n");															
 								}
 							}
 							HashMap<String, Integer> circFSJMapTem = scan2.getCircFSJMap();
@@ -149,22 +159,51 @@ public class MutTest {
 								circFSJMap.put(circKey, num+numNew);
 							}
 							lock.unlock();
-							scan1IdMap = null;
-							circFSJMapTem = null;
 							threadSub.await();
-							threadMain.await();		
-						}else {
-							MutUserFindCircRNAScan2 scan2 = new MutUserFindCircRNAScan2(minMapqUni,circFSJMap,linear_range_size_min,siteArrayMap1,siteArrayMap2,chrSiteMap1,chrSiteMap2,
-				    				chrTCGAMap,seqLen);  
-							HashMap<String, String> scan1IdMap = new HashMap<String, String>();
+							threadMain.await();	
+							
+							//第二遍扫描 starsam
+							MutFindCircRNASTARScan2 starScan2 = new MutFindCircRNASTARScan2(minMapqUni,circFSJMap,linear_range_size_min,siteArrayMap1,siteArrayMap2,chrSiteMap1,chrSiteMap2,
+				    				chrTCGAMap,seqLen,intronLable);  
+							starScan2.setFSJScan2List();
 							while(true) {
 								int threadNum= incr.getAndIncrement();
 								if (threadNum > AllFileSplitNum) {
 									break;
-								}else {	
-									scan2.findCircRNAScan2(samFile,scan1IdMap,AllFileSplitNum,threadNum);														
-									System.out.println(df.format(System.currentTimeMillis())+" "+":Second scan completed "+threadNum);  
-									fileLog.write(df.format(System.currentTimeMillis())+" "+":Second scan completed "+threadNum+"\n");															
+								}else {
+									starScan2.findCircRNAScan2(starSamFile,idCircMap,AllFileSplitNum,threadNum,bwaSamFile);														
+									System.out.println(df.format(System.currentTimeMillis())+" "+":starsam Second scan completed "+threadNum);  
+									fileLog.write(df.format(System.currentTimeMillis())+" "+":starsam Second scan completed "+threadNum+"\n");															
+								}
+							}
+							circFSJMapTem = starScan2.getCircFSJMap();
+							long matchNumTem = starScan2.getReadNum();
+							starScan2 = null;
+							//合并信息
+							lock.lock();
+							for (String circKey : circFSJMap.keySet()) {
+								int num = circFSJMap.get(circKey);						
+								int numNew = circFSJMapTem.get(circKey);
+								circFSJMap.put(circKey, num+numNew);
+							}
+							matchNum = matchNum + matchNumTem;			
+							lock.unlock();
+							circFSJMapTem = null;
+							threadSub.await();
+							threadMain.await();	
+							
+						}else {
+							//第二遍扫描
+							MutUserFindCircRNAScan2 scan2 = new MutUserFindCircRNAScan2(minMapqUni,circFSJMap,linear_range_size_min,siteArrayMap1,siteArrayMap2,chrSiteMap1,chrSiteMap2,
+				    				chrTCGAMap,seqLen);  
+							while(true) {
+								int threadNum= incr.getAndIncrement();
+								if (threadNum > AllFileSplitNum) {
+									break;
+								}else {
+									scan2.findCircRNAScan2(bwaSamFile,idCircMap,AllFileSplitNum,threadNum);														
+									System.out.println(df.format(System.currentTimeMillis())+" "+":unmapSam Second scan completed "+threadNum);  
+									fileLog.write(df.format(System.currentTimeMillis())+" "+":unmapSam Second scan completed "+threadNum+"\n");															
 								}
 							}
 							HashMap<String, Integer> circFSJMapTem = scan2.getCircFSJMap();
@@ -181,11 +220,44 @@ public class MutTest {
 								circBSJMap.put(circKey, num+numNew);						
 							}
 							lock.unlock();
-							scan1IdMap = null;
+							threadSub.await();
+							threadMain.await();	
+							
+							//第二遍扫描 starsam
+							MutUserFindCircRNASTARScan2 starScan2 = new MutUserFindCircRNASTARScan2(minMapqUni,circFSJMap,linear_range_size_min,siteArrayMap1,siteArrayMap2,chrSiteMap1,chrSiteMap2,
+				    				chrTCGAMap,seqLen);  
+							starScan2.setFSJScan2List();
+							starScan2.setBSJScan2List();
+							while(true) {
+								int threadNum= incr.getAndIncrement();
+								if (threadNum > AllFileSplitNum) {
+									break;
+								}else {
+									starScan2.findCircRNAScan2(starSamFile,idCircMap,AllFileSplitNum,threadNum);														
+									System.out.println(df.format(System.currentTimeMillis())+" "+":starsam Second scan completed "+threadNum);  
+									fileLog.write(df.format(System.currentTimeMillis())+" "+":starsam Second scan completed "+threadNum+"\n");															
+								}
+							}
+							circFSJMapTem = starScan2.getCircFSJMap();
+							circBSJMapTem = starScan2.getCircBSJMap();
+							long matchNumTem = starScan2.getReadNum();
+							starScan2 = null;
+							//合并信息
+							lock.lock();
+							for (String circKey : circFSJMap.keySet()) {
+								int num = circFSJMap.get(circKey);						
+								int numNew = circFSJMapTem.get(circKey);
+								circFSJMap.put(circKey, num+numNew);
+								num = circBSJMap.get(circKey);						
+								numNew = circBSJMapTem.get(circKey);
+								circBSJMap.put(circKey, num+numNew);						
+							}
+							matchNum = matchNum + matchNumTem;			
+							lock.unlock();
 							circFSJMapTem = null;
 							circBSJMapTem = null;
 							threadSub.await();
-							threadMain.await();		
+							threadMain.await();	
 						}						
 										
                       } catch (Exception e) {
@@ -232,33 +304,42 @@ public class MutTest {
 			RF = null;
 			System.out.println(df.format(System.currentTimeMillis())+" "+":Successful import of reference genome files");   
 			fileLog.write(df.format(System.currentTimeMillis())+" "+":Successful import of reference genome files"+"\n");
-			//判断划分区域的个数
-			File file = new File(samFile);
-	    	long fileSizeGB = file.length()/1024/1024/1024;
-	    	if (fileSizeGB > 200 && fileSizeGB > threads*10) {
-	    		AllFileSplitNum = (int) fileSizeGB/10;
-			}else {
-				AllFileSplitNum = threads;
+			
+			//识别嵌合文件中circRNA
+			GetChimericOut getChiCirc = new GetChimericOut(maxCircle,minCircle,linear_range_size_min,intronLable,chrExonStartMap,
+					chrExonEndMap,chrTCGAMap,chrExonStartTranscriptMap,chrExonEndTranscriptMap,mitochondrion,mlable,spLable);
+			getChiCirc.getBSJ(chimericPath);
+			idCircMap = getChiCirc.getIdCircMap();
+			getChiCirc = null;
+			String outBSJPath = bwaSamFile+"BSJ1";
+			BufferedWriter BSJOut = new BufferedWriter(new FileWriter(new File(outBSJPath)));	
+			for (String idKey : idCircMap.keySet()) {
+				BSJOut.write(idCircMap.get(idKey)+"\n");
 			}
+			BSJOut.close();
+		
+			//判断划分区域的个数
+			AllFileSplitNum = threads;
 	    	//根据文件大小拆分文件
 			HashMap<String, HashSet<String>> chrCircSiteMap = new HashMap<String, HashSet<String>>();
 			HashSet<String> circSiteSet = new HashSet<String>();
+			HashMap<String, Integer> circChimericBSJMap = new HashMap<String, Integer>();
 			if (UserGivecircRNAG.equals("")) {				
 			    threadMain.await();//所有线程激活2
 			    threadMain.reset();//更新主线程
 				threadSub.await();//主线程关闭，子线程激活1				
 				//第一遍扫描完毕
-				System.out.println(df.format(System.currentTimeMillis())+" "+":Mapped_Reads "+matchNum);  
-				fileLog.write(df.format(System.currentTimeMillis())+" "+":Mapped_Reads "+matchNum+"\n");
+				//System.out.println(df.format(System.currentTimeMillis())+" "+":Mapped_Reads "+matchNum);  
+				//fileLog.write(df.format(System.currentTimeMillis())+" "+":Mapped_Reads "+matchNum+"\n");
 				//更新原子
 				incr.set(1);
 				//导入BSJ set
 				for (int i = 1; i <= AllFileSplitNum; i++) {
-					BufferedReader BSJbr = new BufferedReader(new FileReader(new File(samFile+"BSJ"+i)));
+					BufferedReader BSJbr = new BufferedReader(new FileReader(new File(bwaSamFile+"BSJ"+i)));
 					String line = BSJbr.readLine();
 					while (line != null) {
 						String[] BSJArr = line.split("\t",5);
-						//scan1IdMap.put(BSJArr[0], "");
+						idCircMap.put(BSJArr[0], "");
 						if(!chrCircSiteMap.containsKey(BSJArr[3])) {
 							circSiteSet = new HashSet<String>();
 							circSiteSet.add(BSJArr[4]);
@@ -271,13 +352,31 @@ public class MutTest {
 						line = BSJbr.readLine();
 					}
 					BSJbr.close();
-				}			
+				}	
+				
 			}else {
 				GetUserCircRNA guc = new GetUserCircRNA();
 				chrCircSiteMap = guc.summaryUserCircRNA(UserGivecircRNA, chrTCGAMap);
+				//导入文件			
+				BufferedReader BSJbr = new BufferedReader(new FileReader(new File(unmappedSamPath+"BSJ1")));
+				String line = BSJbr.readLine();
+				while (line != null) {
+					String[] BSJArr = line.split("\t");
+					idCircMap.put(BSJArr[0], "");
+					String circKey = BSJArr[3]+"\t"+BSJArr[4]+"\t"+BSJArr[5];
+					if(!circChimericBSJMap.containsKey(circKey)) {
+						circChimericBSJMap.put(circKey, 1);
+					}else {
+						int temNum =  circChimericBSJMap.get(circKey);
+						circChimericBSJMap.put(circKey, temNum+1);
+					}
+					line = BSJbr.readLine();
+				}
+				BSJbr.close();
+			}
+			if (seqLen == 0) {
 				seqLen = 500;
 			}
-			
 			//创建位点矩阵和位点字典			
 			circFSJMap = new HashMap<String, Integer>();
 			circBSJMap = new HashMap<String, Integer>();
@@ -361,7 +460,25 @@ public class MutTest {
 		    threadMain.reset();//更新主线程
 			threadSub.await();//主线程关闭，子线程激活2
 			
-			//第二遍扫描完毕			
+			//第二遍扫描完毕	
+			//更新原子
+			incr.set(1);
+			//判断划分区域的个数
+			File file = new File(starSamFile);
+	    	long fileSizeGB = file.length()/1024/1024/1024;
+	    	if (fileSizeGB > 200 && fileSizeGB > threads*10) {
+	    		AllFileSplitNum = (int) fileSizeGB/10;
+			}else {
+				AllFileSplitNum = threads;
+			}
+			incr.set(1);
+			threadSub.reset();//更新子线程
+		    threadMain.await();//所有线程激活2
+		    threadMain.reset();//更新主线程
+			threadSub.await();//主线程关闭，子线程激活2				
+			//第二遍扫描starsam完毕			
+			System.out.println(df.format(System.currentTimeMillis())+" "+":Mapped_Reads "+matchNum);  
+			fileLog.write(df.format(System.currentTimeMillis())+" "+":Mapped_Reads "+matchNum+"\n");
 			//清理内存
 			chrSiteMap1 = null;
 			SiteMap1 = null;
@@ -373,9 +490,9 @@ public class MutTest {
 			siteArrayMap2 = null;
 			if (UserGivecircRNAG.equals("")) {
 				ArrayList<String> filePathList = new ArrayList<String>();
-				filePathList.add(samFile);	
+				filePathList.add(bwaSamFile);	
 				HashMap<String, Integer> fileSplitNumMap = new HashMap<String, Integer>();
-				fileSplitNumMap.put(samFile, AllFileSplitNum);
+				fileSplitNumMap.put(bwaSamFile, AllFileSplitNum);
 				Summary summary = new Summary(strigency,chrTCGAMap);
 				ArrayList<String> SummaryCircList = summary.summary(filePathList,fileSplitNumMap,circFSJMap,UserGivecircRNA);
 				circFSJMap = null;
@@ -391,9 +508,13 @@ public class MutTest {
 				}		
 				System.out.println(df.format(System.currentTimeMillis())+" "+":Collation of circRNA completed");  
 				fileLog.write(df.format(System.currentTimeMillis())+" "+":Collation of circRNA completed"+"\n");
-			}else {	
-				System.out.println(df.format(System.currentTimeMillis())+" "+":Mapped_Reads "+matchNum);  
-				fileLog.write(df.format(System.currentTimeMillis())+" "+":Mapped_Reads "+matchNum+"\n");
+			}else {				
+				for (String circKey : circBSJMap.keySet()) {
+	    			if(circChimericBSJMap.containsKey(circKey)) {
+	    				int num1 = circBSJMap.get(circKey);
+	    				circBSJMap.put(circKey, num1+circChimericBSJMap.get(circKey));
+	    			}
+	    		}
 				
 	    		BufferedWriter BSJBw = new BufferedWriter(new FileWriter(new File(outPutBSJCountFile)));
 	    		BufferedWriter FSJBw = new BufferedWriter(new FileWriter(new File(outPutFSJCountFile)));
@@ -413,11 +534,14 @@ public class MutTest {
 		poolExe.shutdown();
 		//删除中间文件
 		for (int i = 1; i <= AllFileSplitNum; i++) {
-			new File(samFile+"BSJ"+i).delete();			
+			new File(bwaSamFile+"BSJ"+i).delete();			
 		}	
 		//删除sam文件
-		if (inputFile.substring(inputFile.length()-3,inputFile.length()).equals("bam")){
-			new File(samFile).delete();			
+		if (unmappedSamPath.substring(unmappedSamPath.length()-3,unmappedSamPath.length()).equals("bam")){
+			new File(bwaSamFile).delete();			
+		}	
+		if (starSamPath.substring(starSamPath.length()-3,starSamPath.length()).equals("bam")){
+			new File(starSamFile).delete();			
 		}	
 		long endTime = System.currentTimeMillis(); 
 		System.out.println("Program run time:" + (endTime - startTime) + "ms");

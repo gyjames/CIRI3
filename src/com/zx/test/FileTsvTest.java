@@ -27,9 +27,10 @@ import com.zx.hg38.AnnotationIntron;
 
 public class FileTsvTest {
 	private int minMapqUni,maxCircle,minCircle,linear_range_size_min,strigency,relExp;
-	private boolean intronLable,mlable;
+	private boolean intronLable,mlable,spLable;
 	private String mitochondrion;
-	public FileTsvTest(int minMapqUni, int maxCircle, int minCircle,int linear_range_size_min,boolean intronLable,int strigency,int relExp,String mitochondrion,boolean mlable) {
+	public FileTsvTest(int minMapqUni, int maxCircle, int minCircle,int linear_range_size_min,boolean intronLable,int strigency,int relExp,String mitochondrion
+			,boolean mlable,boolean spLable) {
 		super();
 		this.minMapqUni = minMapqUni;
 		this.maxCircle = maxCircle;
@@ -40,6 +41,7 @@ public class FileTsvTest {
 		this.relExp = relExp;
 		this.mitochondrion = mitochondrion;
 		this.mlable = mlable;
+		this.spLable = spLable;
 
 	}
     public boolean CIRI3(String samFileTsv,String outPutFile,String annotationFile,String faFile,String UserGivecircRNA) throws IOException {	    
@@ -145,10 +147,10 @@ public class FileTsvTest {
 		FindCircRNAScan1 scan1;
 		if (fileClass.equals("sam")) {
 			scan1 = new FindCircRNAScan1(minMapqUni,maxCircle,minCircle,linear_range_size_min,intronLable,chrExonStartMap,
-					chrExonEndMap,chrTCGAMap,chrExonStartTranscriptMap,chrExonEndTranscriptMap,mitochondrion,mlable);	
+					chrExonEndMap,chrTCGAMap,chrExonStartTranscriptMap,chrExonEndTranscriptMap,mitochondrion,mlable,spLable);	
 		}else {
 			scan1 = new BamFindCircRNAScan1(minMapqUni,maxCircle,minCircle,linear_range_size_min,intronLable,chrExonStartMap,
-					chrExonEndMap,chrTCGAMap,chrExonStartTranscriptMap,chrExonEndTranscriptMap,mitochondrion,mlable);	
+					chrExonEndMap,chrTCGAMap,chrExonStartTranscriptMap,chrExonEndTranscriptMap,mitochondrion,mlable,spLable);	
 		}			
 		for (int j = 0; j < filePathList.size(); j++) {
 			String samFile = filePathList.get(j);

@@ -36,7 +36,7 @@ public class MutFindCircRNAScan2 extends FindCircRNAScan2{
 			fileStart = 0;
 			fileEnd = (long) (Math.floor((fileSize / threads) * (threadNum) / 1024.0) * 1024);		
 		}else {
-			fileStart = (long) (Math.floor((fileSize / threads) * (threadNum - 1) / 1024.0) * 1024)-1025;
+			fileStart = (long) (Math.floor((fileSize / threads) * (threadNum - 1) / 1024.0) * 1024)-2049;
 			fileEnd = (long) (Math.floor((fileSize / threads) * (threadNum) / 1024.0) * 1024);		
 		}
 		//////////////////
@@ -56,7 +56,7 @@ public class MutFindCircRNAScan2 extends FindCircRNAScan2{
 		if (threadNum != 1) {			
 			line = fileReader.readline();
 			while (true) {
-				if(fileChannel.position() <= fileStart + 1025) {
+				if(fileChannel.position() <= fileStart + 2049) {
 					String[] lineArr = line.split("\t",2);
 					id = lineArr[0];
 					line = fileReader.readline();

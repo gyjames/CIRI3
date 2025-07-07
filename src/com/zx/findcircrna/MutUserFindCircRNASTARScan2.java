@@ -8,8 +8,8 @@ import java.util.HashMap;
 
 import com.zx.MultiThreaded.FileReader;
 
-public class MutUserFindCircRNAScan2 extends UserFindCircRNAScan2{
-	public MutUserFindCircRNAScan2(int minMapqUni, HashMap<String, Integer> circFSJMap, int linear_range_size_min,
+public class MutUserFindCircRNASTARScan2 extends UserFindCircRNASTARScan2{
+	public MutUserFindCircRNASTARScan2(int minMapqUni, HashMap<String, Integer> circFSJMap, int linear_range_size_min,
 			HashMap<String, byte[]> siteArrayMap1, HashMap<String, byte[]> siteArrayMap2,
 			HashMap<String, HashMap<Integer, ArrayList<SiteSort>>> chrSiteMap1,
 			HashMap<String, HashMap<Integer, ArrayList<SiteSort>>> chrSiteMap2, HashMap<String, String> chrTCGAMap,
@@ -20,9 +20,9 @@ public class MutUserFindCircRNAScan2 extends UserFindCircRNAScan2{
 	}
 
 	public void findCircRNAScan2(String samFile,HashMap<String, String> scan1IdMap,int threads, int threadNum) throws IOException {
-		readNum = 0 ;
-		boolean matchLable = false;
+		readNum = 0;
 		//存放第一遍扫描的circRNA id       
+		boolean matchLable = false;
 		FileInputStream fileIn = new FileInputStream(samFile);
 		FileChannel fileChannel = fileIn.getChannel();
 		long fileSize = fileChannel.size();
@@ -38,13 +38,9 @@ public class MutUserFindCircRNAScan2 extends UserFindCircRNAScan2{
 		//////////////////
 		HashMap<Integer, ArrayList<String[]>> readsMap = new HashMap<Integer, ArrayList<String[]>>();
 		ArrayList<String[]> serveInforList;
-		//readsMap.put(0, new ArrayList<String[]>());
-		//readsMap.put(1, new ArrayList<String[]>());
 		String id = "",line = "";
 		int oneRead = 0;
 		HashMap<Integer, String> standMap = new HashMap<Integer, String>();
-		//standMap.put(0, "");
-		//standMap.put(1, "");
 		//读取数据		
 		FileReader fileReader = new FileReader(fileChannel, 1024, fileStart);
 		line = fileReader.readline();
@@ -77,8 +73,7 @@ public class MutUserFindCircRNAScan2 extends UserFindCircRNAScan2{
 						readNum++;
 					}
 					matchLable = false;
-				    //判断是否含有BSJ
-					
+					//判断是否含有BSJ
 	                if(scan1IdMap.containsKey(id)) {
 						
 					}else {
@@ -93,7 +88,7 @@ public class MutUserFindCircRNAScan2 extends UserFindCircRNAScan2{
 						
 						}
 						
-					}		
+					}	
 					//read
 	                readsMap.clear();
 					serveInforList = new ArrayList<String[]>();
@@ -139,8 +134,7 @@ public class MutUserFindCircRNAScan2 extends UserFindCircRNAScan2{
 						readNum++;
 					}
 					matchLable = false;
-				    //判断是否含有BSJ
-					
+					//判断是否含有BSJ
 	                if(scan1IdMap.containsKey(id)) {
 						
 					}else {
@@ -155,7 +149,7 @@ public class MutUserFindCircRNAScan2 extends UserFindCircRNAScan2{
 						
 						}
 						
-					}		
+					}	
 					//清空
 	                readsMap.clear();
 					serveInforList = new ArrayList<String[]>();
@@ -214,14 +208,13 @@ public class MutUserFindCircRNAScan2 extends UserFindCircRNAScan2{
 			}
 		}
 		fileReader.close();
-		///判断是否匹配上
+		//最后一个
+		//判断是否匹配上
 		if(matchLable) {
 			readNum++;
 		}
-		matchLable = false;
-	    //判断是否含有BSJ
-		
-        if(scan1IdMap.containsKey(id)) {
+		//判断是否含有BSJ
+		if(scan1IdMap.containsKey(id)) {
 			
 		}else {
 			String circInfor = isBSJScan2.isCandidate(readsMap, standMap);
@@ -235,8 +228,7 @@ public class MutUserFindCircRNAScan2 extends UserFindCircRNAScan2{
 			
 			}
 			
-		}		
+		}	
 		
 	}
-
 }

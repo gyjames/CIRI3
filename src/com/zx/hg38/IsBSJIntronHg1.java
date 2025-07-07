@@ -14,8 +14,8 @@ public class IsBSJIntronHg1 extends IsBSJHg1{
 	HashMap<String, ArrayList<String>> chrExonStartTranscriptMap,chrExonEndTranscriptMap;
 	public IsBSJIntronHg1(int linear_range_size_min, HashMap<String, String> chrExonStartMap,
 			HashMap<String, String> chrExonEndMap, HashMap<String, ArrayList<String>> chrExonStartTranscriptMap,
-			HashMap<String, ArrayList<String>> chrExonEndTranscriptMap, String mitochondrion) {
-		super(linear_range_size_min, chrExonStartMap, chrExonEndMap, chrExonStartTranscriptMap, chrExonEndTranscriptMap,mitochondrion);
+			HashMap<String, ArrayList<String>> chrExonEndTranscriptMap, String mitochondrion,boolean spLable) {
+		super(linear_range_size_min, chrExonStartMap, chrExonEndMap, chrExonStartTranscriptMap, chrExonEndTranscriptMap,mitochondrion,spLable);
 		this.chrExonStartTranscriptMap = chrExonStartTranscriptMap;
 		this.chrExonEndTranscriptMap = chrExonEndTranscriptMap;
 		// TODO Auto-generated constructor stub
@@ -77,7 +77,7 @@ public class IsBSJIntronHg1 extends IsBSJHg1{
 				// Pass end strings to index_compare to find possible splicing signals and the
 				// corresponding strand	
 				HashMap<Integer, String> indexStrandMap;
-				if (circLineArr[1].equals(mitochondrion)) {
+				if (circLineArr[1].equals(mitochondrion) || spLable) {
 					indexStrandMap = indexCompare.indexCompareChrM(end_string1, end_string2);
 				}else {
 					indexStrandMap = indexCompare.indexCompare(end_string1, end_string2);

@@ -12,10 +12,8 @@ import htsjdk.samtools.SamReader;
 import htsjdk.samtools.SamReaderFactory;
 import htsjdk.samtools.util.CloseableIterator;
 
-public class BamFindCircRNAScan1  extends FindCircRNAScan1 {
-	
-	
-	public BamFindCircRNAScan1(int minMapqUni, int maxCircle, int minCircle, int linear_range_size_min,
+public class BamFindCircRNASTARScan1 extends FindCircRNASTARScan1 {
+	public BamFindCircRNASTARScan1(int minMapqUni, int maxCircle, int minCircle, int linear_range_size_min,
 			boolean intronLable, HashMap<String, String> chrExonStartMap, HashMap<String, String> chrExonEndMap,
 			HashMap<String, String> chrTCGAMap, HashMap<String, ArrayList<String>> chrExonStartTranscriptMap,
 			HashMap<String, ArrayList<String>> chrExonEndTranscriptMap, String mitochondrion, boolean mlable,boolean spLable) {
@@ -24,9 +22,8 @@ public class BamFindCircRNAScan1  extends FindCircRNAScan1 {
 		// TODO Auto-generated constructor stub
 	}
 
-	public void findCircRNAScan1(String samFile) throws IOException{		
-		BufferedWriter BSJOut = new BufferedWriter(new FileWriter(new File(samFile+"BSJ1")));		
-		boolean matchLable = false;	
+	public void findCircRNAScan1(String samFile,HashMap<String, String> scan1IdMap) throws IOException{		
+		BufferedWriter BSJOut = new BufferedWriter(new FileWriter(new File(samFile+"BSJ1"),true));			
 		HashMap<Integer, ArrayList<String[]>> readsMap = new HashMap<Integer, ArrayList<String[]>>();
 		ArrayList<String[]> serveInforList;
 		String id = "";
@@ -58,18 +55,14 @@ public class BamFindCircRNAScan1  extends FindCircRNAScan1 {
 			}
 	        String[] serveInfor = {standKey+"",chr,start+"",MQ+"",cigar};	
 	        if (!id.equals(temid)) {
-				//判断是否匹配上
-				if(matchLable) {
-					readNum++;
-				}
-				matchLable = false;
 			    //判断是否含有BSJ
 				if(alignNum > 2 || readsMap.keySet().size() == 1) {
-					String circInfor = isBSJScan1.isBSJScan1(readsMap, standMap);
-					if(circInfor != null) {
-						BSJOut.write(id+"\t"+circInfor+"\n");
-					}
-							
+					if(!scan1IdMap.containsKey(id)) {
+						String circInfor = isBSJScan1.isBSJScan1(readsMap, standMap);
+						if(circInfor != null) {
+							BSJOut.write(id+"\t"+circInfor+"\n");
+						}
+					}			
 				}
 				alignNum = 0;
 				//清空
@@ -103,25 +96,18 @@ public class BamFindCircRNAScan1  extends FindCircRNAScan1 {
 						readsMap.put(readKey, serveInforList);					
 					}
 				}
-
-			if(!cigar.equals("*")) {
-				matchLable = true;
-			}
 			alignNum++;
 		}
 	    reader.close();
-		//判断是否匹配上
-		if(matchLable) {
-			readNum++;
-		}
 		//判断是否含有BSJ		
-		String circInfor = isBSJScan1.isBSJScan1(readsMap, standMap);
-		if(circInfor != null) {
-			BSJOut.write(id+"\t"+circInfor+"\n");
+	    if(!scan1IdMap.containsKey(id)) {
+			String circInfor = isBSJScan1.isBSJScan1(readsMap, standMap);
+			if(circInfor != null) {
+				BSJOut.write(id+"\t"+circInfor+"\n");
+			}
 		}							
 		BSJOut.close();
 	    				
 	}
 
-	
 }

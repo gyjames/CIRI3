@@ -7,17 +7,17 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-public class UserFindCircRNAScan2 {
-	IsBSJScan2 isBSJScan2;
-	IsStand stand = new IsStand();
+public class UserFindCircRNASTARScan2 {
+	IsBSJScan2Star isBSJScan2;
+	IsStand stand = new IsStand();	
 	long readNum = 0;
 	HashMap<String, Integer> circBSJMap = new HashMap<String, Integer>();
-	public UserFindCircRNAScan2(int minMapqUni, HashMap<String, Integer> circFSJMap, int linear_range_size_min, HashMap<String, byte[]> siteArrayMap1,
+	public UserFindCircRNASTARScan2(int minMapqUni, HashMap<String, Integer> circFSJMap, int linear_range_size_min, HashMap<String, byte[]> siteArrayMap1,
 			HashMap<String, byte[]> siteArrayMap2, HashMap<String, HashMap<Integer, ArrayList<SiteSort>>> chrSiteMap1,
 			HashMap<String, HashMap<Integer, ArrayList<SiteSort>>> chrSiteMap2, HashMap<String, String> chrTCGAMap, int seqLen) throws IOException {
 		
-		super();		
-		isBSJScan2 = new IsBSJScan2(minMapqUni,circFSJMap, linear_range_size_min, siteArrayMap1, siteArrayMap2, chrSiteMap1,chrSiteMap2,chrTCGAMap,seqLen);	
+		super();
+		isBSJScan2 = new IsBSJScan2Star(minMapqUni,circFSJMap, linear_range_size_min, siteArrayMap1, siteArrayMap2, chrSiteMap1,chrSiteMap2,chrTCGAMap,seqLen);
 		circBSJMap.putAll(circFSJMap);
 	}	
     public HashMap<String, Integer> getCircFSJMap() throws IOException {
@@ -40,7 +40,7 @@ public class UserFindCircRNAScan2 {
 	public void setReadNum(){
 		readNum = 0;
 	}
-	public void findCircRNAScan2(String input, HashMap<String, String> scan1IdMap) throws IOException {
+	public void findCircRNAScan2(String input,HashMap<String, String> scan1IdMap) throws IOException {
 		boolean matchLable = false;
 		BufferedReader samReadScan2 = new BufferedReader(new FileReader(new File(input)));	
 		HashMap<Integer, ArrayList<String[]>> readsMap = new HashMap<Integer, ArrayList<String[]>>();
@@ -78,7 +78,6 @@ public class UserFindCircRNAScan2 {
 						}
 					
 					}
-					
 				}			
 				//清空
 				//read
@@ -128,10 +127,8 @@ public class UserFindCircRNAScan2 {
 					String circKey = circLine[2]+"\t"+circLine[3]+"\t"+circLine[4];
 					int bsjNum = circBSJMap.get(circKey);
 					circBSJMap.put(circKey, bsjNum+1);
-				}	
-			}
-			
+				}
+			}	
 		}	
 	}
-
 }

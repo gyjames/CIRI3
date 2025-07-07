@@ -3,8 +3,8 @@ package com.zx.hg38;
 import java.util.HashMap;
 
 public class IndexCompare {
-	private String[][] bibasesMut = { { "AC", "AG", "GC", "AG", "AT", "AC", "AT", "AG", "AC"}, 
-			                          { "CT", "GT", "CT", "GC", "GT", "AT", "GT", "AT", "GT"} };
+	private String[][] bibasesMut = { { "AC", "AG", "GC", "AG", "AT", "AC", "AT", "AG"}, 
+			                          { "CT", "GT", "CT", "GC", "GT", "AT", "CT", "AT"} };
 	private String[][] bibases = { { "AC", "AG" }, { "CT", "GT" } };
 	private String[] strandIndex = { "-", "+" };
 	HashMap<Integer, String> indexStrandMap = new HashMap<Integer, String>();
@@ -34,7 +34,7 @@ public class IndexCompare {
 	public HashMap<Integer, String> indexCompareChrM(String end_string1, String end_string2) {
 		indexStrandMap.clear();
 		String[] upEndString = { end_string1.toUpperCase(), end_string2.toUpperCase() };
-		for (int i = 0; i <= 8; i++) {
+		for (int i = 0; i <= 7; i++) {
 			int preIndex = -1;
 			int stand = i%2;
 			while (true) {

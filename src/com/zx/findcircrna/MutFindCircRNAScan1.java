@@ -17,9 +17,9 @@ public class MutFindCircRNAScan1 extends FindCircRNAScan1{
 	public MutFindCircRNAScan1(int minMapqUni, int maxCircle, int minCircle, int linear_range_size_min,
 			boolean intronLable, HashMap<String, String> chrExonStartMap, HashMap<String, String> chrExonEndMap,
 			HashMap<String, String> chrTCGAMap, HashMap<String, ArrayList<String>> chrExonStartTranscriptMap,
-			HashMap<String, ArrayList<String>> chrExonEndTranscriptMap, String mitochondrion, boolean mlable) {
+			HashMap<String, ArrayList<String>> chrExonEndTranscriptMap, String mitochondrion, boolean mlable,boolean spLable) {
 		super(minMapqUni, maxCircle, minCircle, linear_range_size_min, intronLable, chrExonStartMap, chrExonEndMap, chrTCGAMap,
-				chrExonStartTranscriptMap, chrExonEndTranscriptMap, mitochondrion, mlable);
+				chrExonStartTranscriptMap, chrExonEndTranscriptMap, mitochondrion, mlable,spLable);
 		// TODO Auto-generated constructor stub
 	}
 
@@ -36,7 +36,7 @@ public class MutFindCircRNAScan1 extends FindCircRNAScan1{
 			fileStart = 0;
 			fileEnd = (long) (Math.floor((fileSize / threads) * (threadNum) / 1024.0) * 1024);		
 		}else {
-			fileStart = (long) (Math.floor((fileSize / threads) * (threadNum - 1) / 1024.0) * 1024)-1025;
+			fileStart = (long) (Math.floor((fileSize / threads) * (threadNum - 1) / 1024.0) * 1024)-2049;
 			fileEnd = (long) (Math.floor((fileSize / threads) * (threadNum) / 1024.0) * 1024);		
 		}
 		HashMap<Integer, ArrayList<String[]>> readsMap = new HashMap<Integer, ArrayList<String[]>>();
@@ -53,7 +53,7 @@ public class MutFindCircRNAScan1 extends FindCircRNAScan1{
 		if (threadNum != 1) {			
 			line = fileReader.readline();
 			while (true) {
-				if(fileChannel.position() <= fileStart + 1025) {
+				if(fileChannel.position() <= fileStart + 2049) {
 					String[] lineArr = line.split("\t",2);
 					id = lineArr[0];
 					line = fileReader.readline();
@@ -79,7 +79,7 @@ public class MutFindCircRNAScan1 extends FindCircRNAScan1{
 					}
 					matchLable = false;
 				    //判断是否含有BSJ
-					if(alignNum > 2 || readKey == 1) {
+					if(alignNum > 2 || readsMap.keySet().size() == 1) {
 						String circInfor = isBSJScan1.isBSJScan1(readsMap, standMap);
 						if(circInfor != null) {
 							BSJOut.write(id+"\t"+circInfor+"\n");
@@ -141,7 +141,7 @@ public class MutFindCircRNAScan1 extends FindCircRNAScan1{
 					}
 					matchLable = false;
 				    //判断是否含有BSJ
-					if(alignNum > 2 || readKey == 1) {
+					if(alignNum > 2 || readsMap.keySet().size() == 1) {
 						String circInfor = isBSJScan1.isBSJScan1(readsMap, standMap);
 						if(circInfor != null) {
 							BSJOut.write(id+"\t"+circInfor+"\n");
