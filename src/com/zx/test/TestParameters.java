@@ -691,11 +691,11 @@ public class TestParameters {
 				}
 				//mapper
 				if(!parameterMap.get("-Ma").equals("0")) {
-					maLable = true;		
+					maLable = false;		
 				}else if(!parameterMap.get("--mapper").equals("0")) {
-					maLable = true;		
+					maLable = false;		
 				}else {
-					maLable = false;
+					maLable = true;
 				}
 				
 				//way
