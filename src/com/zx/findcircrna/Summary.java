@@ -207,8 +207,8 @@ public class Summary {
 					diffList = new ArrayList<>();
 					for (Integer indexZero : zeroScoreList) {
 						String chrTCGA = chrTCGAMap.get(chr);
-						String seq1 = chrTCGA.substring(startSite[indexUp]-CIGARS[indexZero],startSite[indexUp]);
-						String seq2 = chrTCGA.substring(startSite[indexZero]-CIGARS[indexZero],startSite[indexZero]);
+						String seq1 = chrTCGA.substring(startSite[indexUp],startSite[indexUp]+CIGARS[indexZero]);
+						String seq2 = chrTCGA.substring(startSite[indexZero],startSite[indexZero]+CIGARS[indexZero]);
 						aligner.setSeq(seq1,seq2);
 						String[] alignment = aligner.getAlignment();
 						if (aligner.getAlignmentScore() >= seq1.length() - 2 -(seq1.length()-1)/10*2 && alignment[1].length() > seq1.length() - 2) {
