@@ -388,7 +388,7 @@ The three main output files are:
   + Column 13: the count of high-quality BSJ reads from the first scan
 * `result.txt.BSJ_Matrix` is a BSJ expression matrix file for predicted circRNA.
   + Each detected circRNA is reported on a separate line.
-* `result.txt.BSJ_Matrix` is a FSJ expression matrix file for predicted circRNA.
+* `result.txt.FSJ_Matrix` is a FSJ expression matrix file for predicted circRNA.
 * `result.txt.Score` is a enrichment ratio information file for predicted circRNA.
 
 
