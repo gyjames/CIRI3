@@ -1,4 +1,6 @@
-# CIRI3
+<p align="center">
+  <img src="./data/CIRI3_logo.png" width="60%">
+</p>
 
 ## About
 
