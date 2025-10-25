@@ -21,24 +21,22 @@ public class BSJ_no {
 		BufferedReader infor = new BufferedReader(new FileReader(new File(inforPath)));
 		BufferedWriter bw = new BufferedWriter(new FileWriter(new File(outPath)));	
 		String line = infor.readLine();
+		line = infor.readLine();
 		while (line != null) {
-			if (line.startsWith("#")) {
-				line = infor.readLine();
-				continue;
-			}
 			String[] arr = line.split("\t");
-			if(arr[2].equals("Case")) {
-				casePath = arr[1];
-				caseMapRead = Long.valueOf(arr[3]);
-				caseName = arr[0];
-			}else {
-				controlPath = arr[1];
-				conrtolMapRead = Long.valueOf(arr[3]);
-				controlName = arr[0];
-			}		
+			casePath = arr[1];
+			caseMapRead = Long.valueOf(arr[3]);
+			caseName = arr[0];
 			line = infor.readLine();
+			arr = line.split("\t");
+			controlPath = arr[1];
+			conrtolMapRead = Long.valueOf(arr[3]);
+			controlName = arr[0];
+			line = infor.readLine();
+			break;
 		}
 		infor.close();
+		
 		factor = caseMapRead / (conrtolMapRead+0.0);
 		
 		HashSet<String> circSet = new HashSet<String>();
@@ -110,18 +108,15 @@ public class BSJ_no {
 		long caseMapRead = 1,conrtolMapRead = 1;
 		BufferedReader infor = new BufferedReader(new FileReader(new File(inforPath)));
 		String line = infor.readLine();
+		line = infor.readLine();
 		while (line != null) {
-			if (line.startsWith("#")) {
-				line = infor.readLine();
-				continue;
-			}
 			String[] arr = line.split("\t");
-			if(arr[2].equals("Case")) {
-				caseMapRead = Long.valueOf(arr[3]);
-			}else {
-				conrtolMapRead = Long.valueOf(arr[3]);
-			}		
+			caseMapRead = Long.valueOf(arr[3]);
 			line = infor.readLine();
+			arr = line.split("\t");
+			conrtolMapRead = Long.valueOf(arr[3]);	
+			line = infor.readLine();
+			break;
 		}
 		infor.close();
 		factor = caseMapRead / (conrtolMapRead+0.0);

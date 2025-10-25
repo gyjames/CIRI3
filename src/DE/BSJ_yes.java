@@ -23,11 +23,8 @@ public class BSJ_yes {
 		BufferedReader infor = new BufferedReader(new FileReader(new File(inforPath)));
 		BufferedWriter bw = new BufferedWriter(new FileWriter(new File(outPath)));	
 		String line = infor.readLine();
+		line = infor.readLine();
 		while (line != null) {
-			if (line.startsWith("#")) {
-				line = infor.readLine();
-				continue;
-			}
 			String[] arr = line.split("\t");
 			pathList.add(arr[1]);
 			sampleList.add(arr[0]);			

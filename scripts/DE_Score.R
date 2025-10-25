@@ -25,7 +25,7 @@ de_score <- function(a, b, factor = 1, size = 100000, pval = 0.05) {
 #导入信息
 BSJ_count<-read.delim(BSJ_count_Path)
 infor<-read.delim(infor_Path)
-BSJ_count<-BSJ_count[,c(0,which(infor$Class=="Case"),which(infor$Class=="Control"))+1]
+BSJ_count<-BSJ_count[,c(0,1,2)+1]
 for (i in 1:nrow(BSJ_count)) {
   tmp_de <- de_score(max(BSJ_count[i,2], 1), max(BSJ_count[i,3], 1), 1.0 / factor, size=100000, pval=pval)
   BSJ_count$DE_Score[i] <-tmp_de
