@@ -13,7 +13,12 @@ library(edgeR)
 lib_mtx <- read.delim(lib_path)
 bsj_mtx <- read.delim(BSJ_path, row.names = 1)
 gene_mtx <- read.delim(gene_path, row.names = 1)
-colnames(lib_mtx)<-c("Sample","Path","Class","Num")
+
+if (ncol(lib_mtx) == 4) {
+  colnames(lib_mtx) <- c("Sample", "Path", "Class", "Num")
+} else if (ncol(lib_mtx) == 3) {
+  colnames(lib_mtx) <- c("Sample", "Path", "Class")
+}
 bsj_mtx<-bsj_mtx[,lib_mtx$Sample]
 gene_mtx<-gene_mtx[,lib_mtx$Sample]
 
@@ -28,10 +33,10 @@ gene_DGE <- calcNormFactors(gene_DGE)
 #?????
 if ("Num" %in% colnames(lib_mtx)) {
   Num <- factor(lib_mtx$Num)
-  treat <- factor(lib_mtx$Class, levels= unique(lib_mtx$Class))
+  treat <- factor(lib_mtx$Class, levels=c("Control", "Case"))
   design <- model.matrix(~Num + treat)
 } else {
-  treat <- factor(lib_mtx$Class, levels= unique(lib_mtx$Class))
+  treat <- factor(lib_mtx$Class, levels=c("Control", "Case"))
   design <- model.matrix(~treat)
 }
 
