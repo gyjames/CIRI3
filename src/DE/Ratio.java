@@ -144,9 +144,9 @@ public class Ratio {
 
 		            	
 		            // 指定R脚本文件的路径
-		            String rScriptPath = jarDirectory+"/scripts/FDR.R";
+		            String rScriptPath = jarDirectory+"/scripts/ratio.R";
 		            // 构建命令
-		            String command = "Rscript " + rScriptPath +" "+outPathTem+"P-V.txt"+" "+outPathTem;
+		            String command = "Rscript " + rScriptPath +" "+outPathTem+"P-V.txt"+" "+outPathTem+" "+inforPath+" "+BSJMatrixPath+" "+FSJMatrixPath;
 		            System.out.println(command);		
 		            // 创建进程并执行命令
 		            processBuilder = new ProcessBuilder(command.split(" "));

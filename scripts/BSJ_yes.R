@@ -33,10 +33,10 @@ gene_DGE <- calcNormFactors(gene_DGE)
 #?????
 if ("Num" %in% colnames(lib_mtx)) {
   Num <- factor(lib_mtx$Num)
-  treat <- factor(lib_mtx$Class, levels=c("Control", "Case"))
+  treat <- factor(lib_mtx$Class, levels = unique(lib_mtx$Class))
   design <- model.matrix(~Num + treat)
 } else {
-  treat <- factor(lib_mtx$Class, levels=c("Control", "Case"))
+  treat <- factor(lib_mtx$Class, levels = unique(lib_mtx$Class))
   design <- model.matrix(~treat)
 }
 
