@@ -338,10 +338,10 @@ public class TestParameters {
 					File inputFileTem = new File(inforPath); 
 					inforPath = inputFileTem.getCanonicalPath();
 				}
-				File infile = new File(inforPath);
+				/*File infile = new File(inforPath);
 				if (!infile.isFile()) {
 					dieReasonList.add("No sample list file found at designated directory!");
-				}
+				}*/
 				//output
 				if (!parameterMap.get("-O").equals("F") || !parameterMap.get("--out").equals("F")) {
 					if(!parameterMap.get("-O").equals("F")) {
