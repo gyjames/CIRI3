@@ -402,6 +402,215 @@ public class TestParameters {
 				    	
 	        }
 	        
+		}else if (Parameters[0].equals("SCAN1")) {
+			String inputFile = null, outputFile = null, annotationFile, faFile = null, mitochondrion;
+			int minMapqUni, maxCircle, minCircle, linear_range_size_min = 50000, strigency, relExp, threadNum;
+			boolean intronLable, mLable, spLable, maLable;
+			HashMap<String,String> parameterMap = new HashMap<String,String>();
+			parameterMap.put("-I", "F");
+			parameterMap.put("-O", "F");
+			parameterMap.put("-F", "F");
+			parameterMap.put("-A", "F");
+			parameterMap.put("-H", "F");
+			parameterMap.put("-Max", "200000");
+			parameterMap.put("-Min", "140");
+			parameterMap.put("-S", "2");
+			parameterMap.put("-U", "10");
+			parameterMap.put("-E", "0");
+			parameterMap.put("-Mc", "0");
+			parameterMap.put("-M", "chrM");
+			parameterMap.put("-T", "1");
+			parameterMap.put("-It", "0");
+			parameterMap.put("-Sp", "0");
+			parameterMap.put("-Ma", "0");
+			parameterMap.put("--in", "F");
+			parameterMap.put("--out", "F");
+			parameterMap.put("--ref_file", "F");
+			parameterMap.put("--anno", "F");
+			parameterMap.put("--help", "F");
+			parameterMap.put("--max_span", "200000");
+			parameterMap.put("--min_span", "140");
+			parameterMap.put("--strigency", "2");
+			parameterMap.put("--mapq_uni", "10");
+			parameterMap.put("--rel_exp", "0");
+			parameterMap.put("--mitochondria", "0");
+			parameterMap.put("--chrM", "chrM");
+			parameterMap.put("--thread_num", "1");
+			parameterMap.put("--intron", "0");
+			parameterMap.put("--splicing_signals", "0");
+			parameterMap.put("--mapper", "0");
+			for (int i = 1; i < Parameters.length-1; i++) {
+				if (Parameters[i].startsWith("-")) {
+					parameterMap.put(Parameters[i], Parameters[i+1]);
+				}
+			}
+			if (Parameters[Parameters.length-1].startsWith("-")) {
+				parameterMap.put(Parameters[Parameters.length-1], "T");
+			}
+			if (!parameterMap.get("-H").equals("F")) {
+				System.out.println("Usage: java CIRI3.jar SCAN1 -I in.sam -O output_prefix -F ref.fa [-A ref.gtf] [-T threads] [-Ma 0|1]");
+			} else if (parameterMap.get("-I").equals("F") && parameterMap.get("--in").equals("F")) {
+				System.out.println("Please use --in or -I option to designate input SAM/BAM file!");
+			} else if (parameterMap.get("-O").equals("F") && parameterMap.get("--out").equals("F")) {
+				System.out.println("Please use --out or -O option to designate output prefix!");
+			} else if (parameterMap.get("-F").equals("F") && parameterMap.get("--ref_file").equals("F")) {
+				System.out.println("Please use --ref_file or -F to designate the FASTA reference file!");
+			} else {
+				if (!parameterMap.get("-I").equals("F")) { inputFile = parameterMap.get("-I"); } else { inputFile = parameterMap.get("--in"); }
+				inputFile = new File(inputFile).getCanonicalPath();
+				if (!parameterMap.get("-O").equals("F")) { outputFile = parameterMap.get("-O"); } else { outputFile = parameterMap.get("--out"); }
+				outputFile = new File(outputFile).getCanonicalPath();
+				if (!parameterMap.get("-F").equals("F")) { faFile = parameterMap.get("-F"); } else { faFile = parameterMap.get("--ref_file"); }
+				faFile = new File(faFile).getCanonicalPath();
+				if (!parameterMap.get("-A").equals("F")) { annotationFile = new File(parameterMap.get("-A")).getCanonicalPath(); }
+				else if (!parameterMap.get("--anno").equals("F")) { annotationFile = new File(parameterMap.get("--anno")).getCanonicalPath(); }
+				else { annotationFile = "F"; }
+				maxCircle = !parameterMap.get("-Max").equals("200000") ? Integer.valueOf(parameterMap.get("-Max")) : (!parameterMap.get("--max_span").equals("200000") ? Integer.valueOf(parameterMap.get("--max_span")) : 200000);
+				minCircle = !parameterMap.get("-Min").equals("140") ? Integer.valueOf(parameterMap.get("-Min")) : (!parameterMap.get("--min_span").equals("140") ? Integer.valueOf(parameterMap.get("--min_span")) : 140);
+				strigency = !parameterMap.get("-S").equals("2") ? Integer.valueOf(parameterMap.get("-S")) : (!parameterMap.get("--strigency").equals("2") ? Integer.valueOf(parameterMap.get("--strigency")) : 2);
+				minMapqUni = !parameterMap.get("-U").equals("10") ? Integer.valueOf(parameterMap.get("-U")) : (!parameterMap.get("--mapq_uni").equals("10") ? Integer.valueOf(parameterMap.get("--mapq_uni")) : 10);
+				relExp = !parameterMap.get("-E").equals("0") ? Integer.valueOf(parameterMap.get("-E")) : (!parameterMap.get("--rel_exp").equals("0") ? Integer.valueOf(parameterMap.get("--rel_exp")) : 0);
+				mLable = !parameterMap.get("-Mc").equals("0") || !parameterMap.get("--mitochondria").equals("0");
+				mitochondrion = !parameterMap.get("-M").equals("chrM") ? parameterMap.get("-M") : (!parameterMap.get("--chrM").equals("chrM") ? parameterMap.get("--chrM") : "chrM");
+				threadNum = !parameterMap.get("-T").equals("1") ? Integer.valueOf(parameterMap.get("-T")) : (!parameterMap.get("--thread_num").equals("1") ? Integer.valueOf(parameterMap.get("--thread_num")) : 1);
+				intronLable = !parameterMap.get("-It").equals("0") || !parameterMap.get("--intron").equals("0");
+				spLable = !parameterMap.get("-Sp").equals("0") || !parameterMap.get("--splicing_signals").equals("0");
+				maLable = parameterMap.get("-Ma").equals("0") && parameterMap.get("--mapper").equals("0");
+				if (maLable) {
+					Scan1Test scan1Test = new Scan1Test(minMapqUni, maxCircle, minCircle, linear_range_size_min, intronLable, strigency, relExp, mitochondrion, mLable, spLable);
+					scan1Test.CIRI3(inputFile, outputFile, annotationFile, faFile, threadNum, "");
+				} else {
+					Scan1STARTest scan1Test = new Scan1STARTest(minMapqUni, maxCircle, minCircle, linear_range_size_min, intronLable, strigency, relExp, mitochondrion, mLable, spLable);
+					scan1Test.CIRI3(inputFile, outputFile, annotationFile, faFile, threadNum, "");
+				}
+			}
+		}else if (Parameters[0].equals("BUILD_UNIVERSE")) {
+			String inputFile = null, outputFile = null, faFile = null;
+			HashMap<String,String> parameterMap = new HashMap<String,String>();
+			parameterMap.put("-I", "F"); parameterMap.put("-O", "F"); parameterMap.put("-F", "F"); parameterMap.put("-H", "F");
+			parameterMap.put("--in", "F"); parameterMap.put("--out", "F"); parameterMap.put("--ref_file", "F"); parameterMap.put("--help", "F");
+			for (int i = 1; i < Parameters.length-1; i++) {
+				if (Parameters[i].startsWith("-")) { parameterMap.put(Parameters[i], Parameters[i+1]); }
+			}
+			if (Parameters[Parameters.length-1].startsWith("-")) { parameterMap.put(Parameters[Parameters.length-1], "T"); }
+			if (!parameterMap.get("-H").equals("F")) {
+				System.out.println("Usage: java CIRI3.jar BUILD_UNIVERSE -I samples_scan1.tsv -F ref.fa -O universe_prefix");
+			} else if (parameterMap.get("-I").equals("F") && parameterMap.get("--in").equals("F")) {
+				System.out.println("Please use --in or -I to designate the samples_scan1.tsv file!");
+			} else if (parameterMap.get("-O").equals("F") && parameterMap.get("--out").equals("F")) {
+				System.out.println("Please use --out or -O to designate the output universe prefix!");
+			} else if (parameterMap.get("-F").equals("F") && parameterMap.get("--ref_file").equals("F")) {
+				System.out.println("Please use --ref_file or -F to designate the FASTA reference file!");
+			} else {
+				if (!parameterMap.get("-I").equals("F")) { inputFile = parameterMap.get("-I"); } else { inputFile = parameterMap.get("--in"); }
+				inputFile = new File(inputFile).getCanonicalPath();
+				if (!parameterMap.get("-O").equals("F")) { outputFile = parameterMap.get("-O"); } else { outputFile = parameterMap.get("--out"); }
+				outputFile = new File(outputFile).getCanonicalPath();
+				if (!parameterMap.get("-F").equals("F")) { faFile = parameterMap.get("-F"); } else { faFile = parameterMap.get("--ref_file"); }
+				faFile = new File(faFile).getCanonicalPath();
+				BuildUniverseTest bu = new BuildUniverseTest();
+				bu.build(inputFile, faFile, outputFile);
+			}
+		}else if (Parameters[0].equals("SCAN2")) {
+			String inputFile = null, outputFile = null, universeFile = null, annotationFile, faFile = null, mitochondrion;
+			int minMapqUni, maxCircle, minCircle, linear_range_size_min = 50000, strigency, relExp, threadNum;
+			boolean intronLable, mLable, spLable, maLable;
+			HashMap<String,String> parameterMap = new HashMap<String,String>();
+			parameterMap.put("-I", "F"); parameterMap.put("-O", "F"); parameterMap.put("-F", "F");
+			parameterMap.put("-A", "F"); parameterMap.put("-CU", "F"); parameterMap.put("-H", "F");
+			parameterMap.put("-Max", "200000"); parameterMap.put("-Min", "140"); parameterMap.put("-S", "2");
+			parameterMap.put("-U", "10"); parameterMap.put("-E", "0"); parameterMap.put("-Mc", "0");
+			parameterMap.put("-M", "chrM"); parameterMap.put("-T", "1"); parameterMap.put("-It", "0");
+			parameterMap.put("-Sp", "0"); parameterMap.put("-Ma", "0");
+			parameterMap.put("--in", "F"); parameterMap.put("--out", "F"); parameterMap.put("--ref_file", "F");
+			parameterMap.put("--anno", "F"); parameterMap.put("--circ_universe", "F"); parameterMap.put("--help", "F");
+			parameterMap.put("--thread_num", "1"); parameterMap.put("--intron", "0");
+			parameterMap.put("--splicing_signals", "0"); parameterMap.put("--mapper", "0"); parameterMap.put("--mapq_uni", "10");
+			for (int i = 1; i < Parameters.length-1; i++) {
+				if (Parameters[i].startsWith("-")) { parameterMap.put(Parameters[i], Parameters[i+1]); }
+			}
+			if (Parameters[Parameters.length-1].startsWith("-")) { parameterMap.put(Parameters[Parameters.length-1], "T"); }
+			if (!parameterMap.get("-H").equals("F")) {
+				System.out.println("Usage: java CIRI3.jar SCAN2 -I in.sam -CU cohort.universe -O output_prefix -F ref.fa [-A ref.gtf] [-T threads] [-Ma 0|1]");
+			} else if (parameterMap.get("-I").equals("F") && parameterMap.get("--in").equals("F")) {
+				System.out.println("Please use --in or -I to designate input SAM/BAM file!");
+			} else if (parameterMap.get("-CU").equals("F") && parameterMap.get("--circ_universe").equals("F")) {
+				System.out.println("Please use --circ_universe or -CU to designate the universe file from BUILD_UNIVERSE!");
+			} else if (parameterMap.get("-O").equals("F") && parameterMap.get("--out").equals("F")) {
+				System.out.println("Please use --out or -O to designate output prefix!");
+			} else if (parameterMap.get("-F").equals("F") && parameterMap.get("--ref_file").equals("F")) {
+				System.out.println("Please use --ref_file or -F to designate the FASTA reference file!");
+			} else {
+				if (!parameterMap.get("-I").equals("F")) { inputFile = parameterMap.get("-I"); } else { inputFile = parameterMap.get("--in"); }
+				inputFile = new File(inputFile).getCanonicalPath();
+				if (!parameterMap.get("-CU").equals("F")) { universeFile = parameterMap.get("-CU"); } else { universeFile = parameterMap.get("--circ_universe"); }
+				universeFile = new File(universeFile).getCanonicalPath();
+				if (!parameterMap.get("-O").equals("F")) { outputFile = parameterMap.get("-O"); } else { outputFile = parameterMap.get("--out"); }
+				outputFile = new File(outputFile).getCanonicalPath();
+				if (!parameterMap.get("-F").equals("F")) { faFile = parameterMap.get("-F"); } else { faFile = parameterMap.get("--ref_file"); }
+				faFile = new File(faFile).getCanonicalPath();
+				if (!parameterMap.get("-A").equals("F")) { annotationFile = new File(parameterMap.get("-A")).getCanonicalPath(); }
+				else if (!parameterMap.get("--anno").equals("F")) { annotationFile = new File(parameterMap.get("--anno")).getCanonicalPath(); }
+				else { annotationFile = "F"; }
+				minMapqUni = !parameterMap.get("-U").equals("10") ? Integer.valueOf(parameterMap.get("-U")) : (!parameterMap.get("--mapq_uni").equals("10") ? Integer.valueOf(parameterMap.get("--mapq_uni")) : 10);
+				maxCircle = !parameterMap.get("-Max").equals("200000") ? Integer.valueOf(parameterMap.get("-Max")) : 200000;
+				minCircle = !parameterMap.get("-Min").equals("140") ? Integer.valueOf(parameterMap.get("-Min")) : 140;
+				strigency = !parameterMap.get("-S").equals("2") ? Integer.valueOf(parameterMap.get("-S")) : 2;
+				relExp = !parameterMap.get("-E").equals("0") ? Integer.valueOf(parameterMap.get("-E")) : 0;
+				mLable = !parameterMap.get("-Mc").equals("0");
+				mitochondrion = parameterMap.get("-M");
+				threadNum = !parameterMap.get("-T").equals("1") ? Integer.valueOf(parameterMap.get("-T")) : (!parameterMap.get("--thread_num").equals("1") ? Integer.valueOf(parameterMap.get("--thread_num")) : 1);
+				intronLable = !parameterMap.get("-It").equals("0") || !parameterMap.get("--intron").equals("0");
+				spLable = !parameterMap.get("-Sp").equals("0") || !parameterMap.get("--splicing_signals").equals("0");
+				maLable = parameterMap.get("-Ma").equals("0") && parameterMap.get("--mapper").equals("0");
+				if (maLable) {
+					Scan2Test scan2Test = new Scan2Test(minMapqUni, maxCircle, minCircle, linear_range_size_min, intronLable, strigency, relExp, mitochondrion, mLable, spLable);
+					scan2Test.CIRI3(inputFile, outputFile, universeFile, faFile, annotationFile, threadNum);
+				} else {
+					Scan2STARTest scan2Test = new Scan2STARTest(minMapqUni, maxCircle, minCircle, linear_range_size_min, intronLable, strigency, relExp, mitochondrion, mLable, spLable);
+					scan2Test.CIRI3(inputFile, outputFile, universeFile, faFile, annotationFile, threadNum);
+				}
+			}
+		}else if (Parameters[0].equals("FINALIZE")) {
+			String inputFile = null, outputFile = null, annotationFile, faFile = null;
+			int minMapqUni = 10, maxCircle = 200000, minCircle = 140, linear_range_size_min = 50000, strigency, relExp;
+			boolean intronLable, mLable = false, spLable = false;
+			String mitochondrion = "chrM";
+			HashMap<String,String> parameterMap = new HashMap<String,String>();
+			parameterMap.put("-I", "F"); parameterMap.put("-O", "F"); parameterMap.put("-F", "F");
+			parameterMap.put("-A", "F"); parameterMap.put("-S", "2"); parameterMap.put("-E", "0");
+			parameterMap.put("-It", "0"); parameterMap.put("-H", "F");
+			parameterMap.put("--in", "F"); parameterMap.put("--out", "F"); parameterMap.put("--ref_file", "F");
+			parameterMap.put("--anno", "F"); parameterMap.put("--strigency", "2"); parameterMap.put("--rel_exp", "0");
+			parameterMap.put("--intron", "0"); parameterMap.put("--help", "F");
+			for (int i = 1; i < Parameters.length-1; i++) {
+				if (Parameters[i].startsWith("-")) { parameterMap.put(Parameters[i], Parameters[i+1]); }
+			}
+			if (Parameters[Parameters.length-1].startsWith("-")) { parameterMap.put(Parameters[Parameters.length-1], "T"); }
+			if (!parameterMap.get("-H").equals("F")) {
+				System.out.println("Usage: java CIRI3.jar FINALIZE -I finalize_samples.tsv -F ref.fa -O output_prefix [-A ref.gtf] [-S strigency] [-E rel_exp] [-It 0|1]");
+			} else if (parameterMap.get("-I").equals("F") && parameterMap.get("--in").equals("F")) {
+				System.out.println("Please use --in or -I to designate the finalize_samples.tsv file!");
+			} else if (parameterMap.get("-O").equals("F") && parameterMap.get("--out").equals("F")) {
+				System.out.println("Please use --out or -O to designate output prefix!");
+			} else if (parameterMap.get("-F").equals("F") && parameterMap.get("--ref_file").equals("F")) {
+				System.out.println("Please use --ref_file or -F to designate the FASTA reference file!");
+			} else {
+				if (!parameterMap.get("-I").equals("F")) { inputFile = parameterMap.get("-I"); } else { inputFile = parameterMap.get("--in"); }
+				inputFile = new File(inputFile).getCanonicalPath();
+				if (!parameterMap.get("-O").equals("F")) { outputFile = parameterMap.get("-O"); } else { outputFile = parameterMap.get("--out"); }
+				outputFile = new File(outputFile).getCanonicalPath();
+				if (!parameterMap.get("-F").equals("F")) { faFile = parameterMap.get("-F"); } else { faFile = parameterMap.get("--ref_file"); }
+				faFile = new File(faFile).getCanonicalPath();
+				if (!parameterMap.get("-A").equals("F")) { annotationFile = new File(parameterMap.get("-A")).getCanonicalPath(); }
+				else if (!parameterMap.get("--anno").equals("F")) { annotationFile = new File(parameterMap.get("--anno")).getCanonicalPath(); }
+				else { annotationFile = "F"; }
+				strigency = !parameterMap.get("-S").equals("2") ? Integer.valueOf(parameterMap.get("-S")) : (!parameterMap.get("--strigency").equals("2") ? Integer.valueOf(parameterMap.get("--strigency")) : 2);
+				relExp = !parameterMap.get("-E").equals("0") ? Integer.valueOf(parameterMap.get("-E")) : (!parameterMap.get("--rel_exp").equals("0") ? Integer.valueOf(parameterMap.get("--rel_exp")) : 0);
+				intronLable = !parameterMap.get("-It").equals("0") || !parameterMap.get("--intron").equals("0");
+				FinalizeTest ft = new FinalizeTest(minMapqUni, maxCircle, minCircle, linear_range_size_min, intronLable, strigency, relExp, mitochondrion, mLable, spLable);
+				ft.finalize(inputFile, faFile, annotationFile, outputFile);
+			}
 		}else {
 			String inputFile = null,outputFile = null,UserGivecircRNA = "",annotationFile,faFile = null,mitochondrion;
 			int minMapqUni,maxCircle,minCircle,linear_range_size_min = 50000,strigency,relExp,threadNum,way;
