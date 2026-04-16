@@ -67,6 +67,10 @@ public class MutFindCircRNASTARScan2 extends FindCircRNASTARScan2{
 		}				
 		if (threadNum == threads) {
 			while (line != null) {
+				if (line.startsWith("@")) {
+					line = fileReader.readline();
+					continue;
+				}
 				String[] lineArr = line.split("\t",7);
 				int readKey = Integer.valueOf(stand.stand7(lineArr[1]));
 				String[] serveInfor = {stand.stand5(lineArr[1]),lineArr[2],lineArr[3],lineArr[4],lineArr[5]};
