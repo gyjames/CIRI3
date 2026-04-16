@@ -396,6 +396,205 @@ The three main output files are:
 
 
 
+---
+
+## Decoupled HPC Pipeline
+
+For large cohorts on HPC clusters, CIRI3 exposes four independent sub-commands
+that map to the three logical stages of the joint pipeline. Each per-sample
+stage can be submitted as a separate array job; the two joint steps are single
+jobs that run after all per-sample jobs complete.
+
+```
+[SCAN1]          per sample, parallelisable (array job)
+[BUILD_UNIVERSE] joint, once — after all SCAN1 jobs finish
+[SCAN2]          per sample, parallelisable (array job)
+[FINALIZE]       joint, once — after all SCAN2 jobs finish
+```
+
+### Installation
+
+```bash
+git clone https://github.com/gyjames/CIRI3.git
+cd CIRI3
+conda env create -n CIRI3 -f ./environment.yaml
+conda activate CIRI3
+```
+
+Compile the source (required after cloning; the distributed JARs do not include
+the new sub-commands until the next release):
+
+```bash
+# JDK 11+ required
+mkdir -p bin
+find src -name "*.java" > sources.txt
+javac -source 11 -target 11 -cp "bin:lib/htsjdk-3.0.4.jar" -d bin @sources.txt
+# Run as: java -cp "bin:lib/htsjdk-3.0.4.jar" com.zx.test.TestParameters <args>
+```
+
+### Sub-command reference
+
+#### `SCAN1` — per-sample first scan
+
+```
+java -cp "bin:lib/htsjdk-3.0.4.jar" com.zx.test.TestParameters SCAN1 \
+    -I  sample.sam          \  # SAM/BAM (or chimeric,aligned,bwa triple for -Ma 1)
+    -O  sample_prefix       \  # output prefix; writes {prefix}.scan1_meta
+    -F  ref.fa              \
+   [-A  ref.gtf]            \  # annotation (optional, needed for -It 1)
+   [-T  8]                  \  # threads (default: 1)
+   [-Ma 0]                     # 0 = BWA-MEM (default), 1 = STAR
+```
+
+Outputs:
+- `{sample_prefix}.scan1_meta` — checkpoint metadata
+- `{sample.sam}BSJ{1..N}` — per-thread BSJ fragment files (kept, not deleted)
+
+#### `BUILD_UNIVERSE` — joint universe construction
+
+```
+java -cp "bin:lib/htsjdk-3.0.4.jar" com.zx.test.TestParameters BUILD_UNIVERSE \
+    -I  samples_scan1.tsv   \  # two-column TSV: samFile<TAB>scan1_meta_path
+    -F  ref.fa              \
+    -O  cohort_prefix          # output prefix; writes {prefix}.universe
+```
+
+`samples_scan1.tsv` format (one row per sample):
+```
+/abs/path/sample1.sam   /abs/path/sample1.scan1_meta
+/abs/path/sample2.sam   /abs/path/sample2.scan1_meta
+```
+
+#### `SCAN2` — per-sample second scan
+
+```
+java -cp "bin:lib/htsjdk-3.0.4.jar" com.zx.test.TestParameters SCAN2 \
+    -I  sample.sam          \  # same SAM/BAM as SCAN1 (BSJ files must exist)
+    -CU cohort.universe     \  # universe file from BUILD_UNIVERSE
+    -O  sample_scan2_prefix \  # output prefix; writes {prefix}.fsj_counts
+    -F  ref.fa              \
+   [-T  8]                  \  # threads (default: 1; should match SCAN1 thread count)
+   [-Ma 0]                     # must match -Ma used in SCAN1
+```
+
+#### `FINALIZE` — joint Summary + Annotation + matrix writing
+
+```
+java -cp "bin:lib/htsjdk-3.0.4.jar" com.zx.test.TestParameters FINALIZE \
+    -I  finalize_samples.tsv \  # four-column TSV (see below)
+    -F  ref.fa               \
+    -O  cohort_prefix        \  # output prefix; writes result, BSJ_Matrix, FSJ_Matrix
+   [-A  ref.gtf]             \  # annotation (optional)
+   [-S  2]                   \  # strigency (0/1/2, default: 2)
+   [-E  0]                   \  # rel_exp threshold (default: 0)
+   [-It 0]                      # intronic circRNAs (0/1, default: 0)
+```
+
+`finalize_samples.tsv` format (one row per sample):
+```
+/abs/path/sample1.sam   /abs/path/sample1.fsj_counts   8   sample1
+/abs/path/sample2.sam   /abs/path/sample2.fsj_counts   8   sample2
+```
+Columns: SAM path, `.fsj_counts` path, `fileSplitNum` (from `.scan1_meta`), sample name.
+
+### Intermediate file formats
+
+**`.scan1_meta`** — written by SCAN1, read by BUILD_UNIVERSE / FINALIZE
+```
+samFile=/abs/path/sample.sam
+readLen=151
+readNum=10503264
+fileSplitNum=8
+```
+
+**`.universe`** — written by BUILD_UNIVERSE, read by SCAN2
+```
+seqLen=139
+chr1	1379083	1414681
+chr1	1384101	1397537
+```
+First line: `seqLen=<int>` (global max readLen − 12).
+Subsequent lines: one circRNA candidate per line, tab-separated (`chr start end [extra...]`).
+
+**`.fsj_counts`** — written by SCAN2, read by FINALIZE
+```
+chr1	1379083	1414681	3
+chr1	1384101	1397537	0
+```
+Tab-separated: `chr start end fsjCount` — one line per circRNA in the universe.
+
+### Example HPC workflow (BWA-MEM, Slurm)
+
+```bash
+THREADS=8
+REF_FA=/path/to/ref.fa
+GTF=/path/to/ref.gtf
+SAMPLES=(sample1 sample2 sample3 sample4)
+CIRI3_CP="bin:lib/htsjdk-3.0.4.jar"
+CIRI3="java -cp $CIRI3_CP com.zx.test.TestParameters"
+
+# Stage 1 — submit as array job
+for S in "${SAMPLES[@]}"; do
+  $CIRI3 SCAN1 -I ${S}.sam -O ${S} -F $REF_FA -A $GTF -T $THREADS
+done
+
+# Stage 2a — run once after all SCAN1 jobs complete
+> samples_scan1.tsv
+for S in "${SAMPLES[@]}"; do
+  echo -e "$(realpath ${S}.sam)\t$(realpath ${S}.scan1_meta)"
+done >> samples_scan1.tsv
+$CIRI3 BUILD_UNIVERSE -I samples_scan1.tsv -F $REF_FA -O cohort
+
+# Stage 3 — submit as array job
+for S in "${SAMPLES[@]}"; do
+  $CIRI3 SCAN2 -I ${S}.sam -CU cohort.universe -O ${S}.scan2 -F $REF_FA -T $THREADS
+done
+
+# Stage 2b — run once after all SCAN2 jobs complete
+> finalize_samples.tsv
+for S in "${SAMPLES[@]}"; do
+  SPLITNUM=$(grep "^fileSplitNum=" ${S}.scan1_meta | cut -d= -f2)
+  echo -e "$(realpath ${S}.sam)\t$(realpath ${S}.scan2.fsj_counts)\t${SPLITNUM}\t${S}"
+done >> finalize_samples.tsv
+$CIRI3 FINALIZE -I finalize_samples.tsv -F $REF_FA -O cohort -A $GTF -S 2
+```
+
+### Example HPC workflow (STAR, Slurm)
+
+```bash
+# After STAR alignment, for each sample the input triple is:
+#   Chimeric.out.junction,Aligned.out.sam,bwa.sam
+
+for S in "${SAMPLES[@]}"; do
+  TRIPLE="STAR_output_${S}/Chimeric.out.junction,\
+STAR_output_${S}/Aligned.out.sam,\
+STAR_output_${S}/bwa.sam"
+  $CIRI3 SCAN1 -I "$TRIPLE" -O ${S} -F $REF_FA -A $GTF -T $THREADS -Ma 1
+done
+
+# BUILD_UNIVERSE, SCAN2, and FINALIZE are identical to the BWA-MEM example above
+# (just add -Ma 1 to each SCAN2 call and use the bwa.sam path in FINALIZE TSV)
+```
+
+### Verifying equivalence with the original pipeline
+
+A test script is provided that runs both the original (`-W 1`) and decoupled
+pipelines on the bundled test data and confirms the BSJ and FSJ matrices are
+identical:
+
+```bash
+bash scripts/test_decoupled_pipeline.sh
+# With multiple threads:
+bash scripts/test_decoupled_pipeline.sh --threads 4
+# Keep intermediate files for inspection:
+bash scripts/test_decoupled_pipeline.sh --keep
+```
+
+The script compiles the source, runs both pipelines, normalises column order,
+sorts rows by circRNA ID, and reports PASS/FAIL for each check.
+
+---
+
 ## References
 
 1. Li, Heng. "Aligning sequence reads, clone sequences and assembly contigs with BWA-MEM." arXiv preprint arXiv:1303.3997 (2013).
