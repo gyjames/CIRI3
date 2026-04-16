@@ -1,0 +1,11 @@
+# Pipeline intermediate files
+*.samBSJ*
+*.scan1_meta
+*.fsj_counts
+*.universe
+
+# Test working directories
+test_decoupled_*/
+
+# Build artifacts
+sources.txt
