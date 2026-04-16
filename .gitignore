@@ -2,6 +2,7 @@
 *.samBSJ*
 *.scan1_meta
 *.fsj_counts
+*.bsj_counts
 *.universe
 
 # Test working directories
