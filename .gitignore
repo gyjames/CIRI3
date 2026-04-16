@@ -9,3 +9,5 @@ test_decoupled_*/
 
 # Build artifacts
 sources.txt
+*.class
+

@@ -421,8 +421,9 @@ conda env create -n CIRI3 -f ./environment.yaml
 conda activate CIRI3
 ```
 
-Compile the source (required after cloning; the distributed JARs do not include
-the new sub-commands until the next release):
+Compile the source (required after cloning; the pre-built JARs do not include
+the new sub-commands, and compiling from source also applies several pre-existing
+SAM-header-handling bug fixes):
 
 ```bash
 # JDK 11+ required
@@ -562,9 +563,22 @@ $CIRI3 FINALIZE -I finalize_samples.tsv -F $REF_FA -O cohort -A $GTF -S 2
 ### Example HPC workflow (STAR, Slurm)
 
 ```bash
-# After STAR alignment, for each sample the input triple is:
+# After STAR alignment + BWA-MEM re-alignment of unmapped reads, the input
+# triple for each sample is:
 #   Chimeric.out.junction,Aligned.out.sam,bwa.sam
+#
+# IMPORTANT: BSJ fragment files are written next to bwa.sam (not the STAR SAM).
+# The bwa.sam path must therefore be used as the samFile key in
+# BUILD_UNIVERSE and FINALIZE TSVs.
 
+THREADS=8
+REF_FA=/path/to/ref.fa
+GTF=/path/to/ref.gtf
+SAMPLES=(sample1 sample2 sample3 sample4)
+CIRI3_CP="bin:lib/htsjdk-3.0.4.jar"
+CIRI3="java -cp $CIRI3_CP com.zx.test.TestParameters"
+
+# Stage 1 — submit as array job
 for S in "${SAMPLES[@]}"; do
   TRIPLE="STAR_output_${S}/Chimeric.out.junction,\
 STAR_output_${S}/Aligned.out.sam,\
@@ -572,26 +586,61 @@ STAR_output_${S}/bwa.sam"
   $CIRI3 SCAN1 -I "$TRIPLE" -O ${S} -F $REF_FA -A $GTF -T $THREADS -Ma 1
 done
 
-# BUILD_UNIVERSE, SCAN2, and FINALIZE are identical to the BWA-MEM example above
-# (just add -Ma 1 to each SCAN2 call and use the bwa.sam path in FINALIZE TSV)
+# Stage 2a — run once after all SCAN1 jobs complete
+# Column 1 of samples_scan1.tsv must be the bwa.sam path (where BSJ files live)
+> samples_scan1.tsv
+for S in "${SAMPLES[@]}"; do
+  BWA_SAM=$(realpath STAR_output_${S}/bwa.sam)
+  echo -e "${BWA_SAM}\t$(realpath ${S}.scan1_meta)"
+done >> samples_scan1.tsv
+$CIRI3 BUILD_UNIVERSE -I samples_scan1.tsv -F $REF_FA -O cohort
+
+# Stage 3 — submit as array job
+for S in "${SAMPLES[@]}"; do
+  TRIPLE="STAR_output_${S}/Chimeric.out.junction,\
+STAR_output_${S}/Aligned.out.sam,\
+STAR_output_${S}/bwa.sam"
+  $CIRI3 SCAN2 -I "$TRIPLE" -CU cohort.universe -O ${S}.scan2 -F $REF_FA -T $THREADS -Ma 1
+done
+
+# Stage 4 — run once after all SCAN2 jobs complete
+# Column 1 must again be the bwa.sam path (used to locate BSJ files for BSJ matrix)
+> finalize_samples.tsv
+for S in "${SAMPLES[@]}"; do
+  BWA_SAM=$(realpath STAR_output_${S}/bwa.sam)
+  SPLITNUM=$(grep "^fileSplitNum=" ${S}.scan1_meta | cut -d= -f2)
+  echo -e "${BWA_SAM}\t$(realpath ${S}.scan2.fsj_counts)\t${SPLITNUM}\t${S}"
+done >> finalize_samples.tsv
+$CIRI3 FINALIZE -I finalize_samples.tsv -F $REF_FA -O cohort -A $GTF -S 2
 ```
 
 ### Verifying equivalence with the original pipeline
 
-A test script is provided that runs both the original (`-W 1`) and decoupled
-pipelines on the bundled test data and confirms the BSJ and FSJ matrices are
-identical:
+**Bundled test data (BWA-MEM, ~7 s):**
 
 ```bash
 bash scripts/test_decoupled_pipeline.sh
-# With multiple threads:
-bash scripts/test_decoupled_pipeline.sh --threads 4
-# Keep intermediate files for inspection:
-bash scripts/test_decoupled_pipeline.sh --keep
+bash scripts/test_decoupled_pipeline.sh --threads 4   # multi-thread
+bash scripts/test_decoupled_pipeline.sh --keep        # keep intermediates
 ```
 
-The script compiles the source, runs both pipelines, normalises column order,
-sorts rows by circRNA ID, and reports PASS/FAIL for each check.
+Compiles from source, runs both the original (`-W 1`) and decoupled pipelines
+on the four SAM files in `data/circRNA/Mutiple/`, normalises column order,
+sorts rows by circRNA ID, and reports PASS/FAIL for every check.
+
+**Full-size data (STAR mode):**
+
+```bash
+bash scripts/test_decoupled_pipeline_star_fullsize.sh
+bash scripts/test_decoupled_pipeline_star_fullsize.sh --threads 8 --keep
+```
+
+Edit the `DATA_DIR`, `SAMPLES`, `CIRI3_JAR`, `REF_FA`, and `GTF_FILE`
+variables at the top of the script to match your environment. The script:
+1. Runs the original pipeline with the pre-built JAR (`-W 1 -Ma 1`)
+2. Runs the decoupled pipeline (SCAN1 → BUILD_UNIVERSE → SCAN2 → FINALIZE)
+   using compiled source from this repository
+3. Compares BSJ and FSJ matrices for exact equality
 
 ---
 
