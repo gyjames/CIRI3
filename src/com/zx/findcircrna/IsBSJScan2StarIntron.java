@@ -8,6 +8,7 @@ import com.zx.hg38.IsBSJIntronHg2;
 
 public class IsBSJScan2StarIntron extends IsBSJScan2Star {
 	IsBSJIntronHg2 isBSJHg2Intron;
+	Misd misdInt = new Misd();
 	public IsBSJScan2StarIntron(int minMapqUni, HashMap<String, Integer> circFSJMap, int linear_range_size_min,
 			HashMap<String, byte[]> siteArrayMap1, HashMap<String, byte[]> siteArrayMap2,
 			HashMap<String, HashMap<Integer, ArrayList<SiteSort>>> chrSiteMap1,
@@ -40,7 +41,7 @@ public class IsBSJScan2StarIntron extends IsBSJScan2Star {
 					temFSJId.addAll(GFC.getFSJ(startTem, endTem,aligment[1],0,siteArray1,siteArray2,siteMap1,siteMap2));
 				} else {
 					aligment[4] = aligment[4].replaceAll("H", "S");
-					int[] CIGARite = misd.misd(aligment[4], temSeqLen);
+					int[] CIGARite = misdInt.misd(aligment[4], temSeqLen);
 					// Alignment style: xS/HyM
 					if (CIGARite[0] == -1) {
 						int newNumSite = Integer.valueOf(aligment[2]);
@@ -80,7 +81,7 @@ public class IsBSJScan2StarIntron extends IsBSJScan2Star {
 												String[] aligmentAno = readsMap.get(1 - n).get(m);
 												
 												if (aligmentAno[1].equals(aligment[1]) && Integer.valueOf(aligmentAno[3]) >= minMapqUni) {
-													int[] CIGARiteAno = misd.misd(aligmentAno[5],temSeqLen);
+													int[] CIGARiteAno = misdInt.misd(aligmentAno[5],temSeqLen);
 													if (!aligmentAno[0].equals(aligment[0]) && Integer.valueOf(aligmentAno[2]) >= Integer.valueOf(temChrSite[0]) - 6
 															&& Integer.valueOf(aligmentAno[2]) + CIGARiteAno[3] - 1 <= Integer.valueOf(temChrSite[1]) + 6) {
 														str2_ok = 1;
@@ -150,7 +151,7 @@ public class IsBSJScan2StarIntron extends IsBSJScan2Star {
 										for (int m = 0; m < readsMap.get(1 - n).size(); m++) {
 											String[] aligmentAno = readsMap.get(1 - n).get(m);		
 											if (aligmentAno[1].equals(aligment[1]) && Integer.valueOf(aligmentAno[3]) >= minMapqUni) {
-												int[] CIGARiteAno = misd.misd(aligmentAno[5],temSeqLen);
+												int[] CIGARiteAno = misdInt.misd(aligmentAno[5],temSeqLen);
 												if (!aligmentAno[0].equals(aligment[0]) && Integer.valueOf(aligmentAno[2]) >= Integer
 																.valueOf(temChrSite[0]) - 6
 														&& Integer.valueOf(aligmentAno[2]) + CIGARiteAno[3] - 1 <= Integer.valueOf(temChrSite[1]) + 6) {
@@ -228,7 +229,7 @@ public class IsBSJScan2StarIntron extends IsBSJScan2Star {
 											for (int m = 0; m < readsMap.get(1 - n).size(); m++) {
 												String[] aligmentAno = readsMap.get(1 - n).get(m);
 												if (aligmentAno[1].equals(aligment[1]) && Integer.valueOf(aligmentAno[3]) >= minMapqUni) {
-													int[] CIGARiteAno = misd.misd(aligmentAno[4],temSeqLen);
+													int[] CIGARiteAno = misdInt.misd(aligmentAno[4],temSeqLen);
 													if (!aligmentAno[0].equals(aligment[0])&& Integer.valueOf(aligmentAno[2]) >= Integer
 																	.valueOf(temChrSite[0]) - 6
 															&& Integer.valueOf(aligmentAno[2]) + CIGARiteAno[3] - 1 <= Integer.valueOf(temChrSite[1]) + 6) {
@@ -302,7 +303,7 @@ public class IsBSJScan2StarIntron extends IsBSJScan2Star {
 										for (int m = 0; m < readsMap.get(1 - n).size(); m++) {
 											String[] aligmentAno = readsMap.get(1 - n).get(m);
 											if (aligmentAno[1].equals(aligment[1]) && Integer.valueOf(aligmentAno[3]) >= minMapqUni) {
-												int[] CIGARiteAno = misd.misd(aligmentAno[4],temSeqLen);
+												int[] CIGARiteAno = misdInt.misd(aligmentAno[4],temSeqLen);
 												if (!aligmentAno[0].equals(aligment[0])&& Integer.valueOf(aligmentAno[2]) >= Integer
 																.valueOf(temChrSite[0]) - 6 && Integer.valueOf(aligmentAno[2]) + CIGARiteAno[3]
 																- 1 <= Integer.valueOf(temChrSite[1]) + 6) {
@@ -381,7 +382,7 @@ public class IsBSJScan2StarIntron extends IsBSJScan2Star {
 											for (int m = 0; m < readsMap.get(1 - n).size(); m++) {
 												String[] aligmentAno = readsMap.get(1 - n).get(m);
 												if (aligmentAno[1].equals(aligment[1]) && Integer.valueOf(aligmentAno[3]) >= minMapqUni) {
-													int[] CIGARiteAno = misd.misd(aligmentAno[4],temSeqLen);
+													int[] CIGARiteAno = misdInt.misd(aligmentAno[4],temSeqLen);
 													if (!aligmentAno[0].equals(aligment[0])&& Integer.valueOf(aligmentAno[2]) >= Integer
 														.valueOf(temChrSite[0]) - 6&& Integer.valueOf(aligmentAno[2]) + CIGARiteAno[3]
 														- 1 <= Integer.valueOf(temChrSite[1]) + 6) {
@@ -452,7 +453,7 @@ public class IsBSJScan2StarIntron extends IsBSJScan2Star {
 											String[] aligmentAno = readsMap.get(1 - n).get(m);
 											
 											if (aligmentAno[1].equals(aligment[1])&& Integer.valueOf(aligmentAno[3]) >= minMapqUni) {
-												int[] CIGARiteAno = misd.misd(aligmentAno[4],temSeqLen);
+												int[] CIGARiteAno = misdInt.misd(aligmentAno[4],temSeqLen);
 												if (!aligmentAno[0].equals(aligment[0])&& Integer.valueOf(aligmentAno[2]) >= Integer
 													.valueOf(temChrSite[0]) - 6&& Integer.valueOf(aligmentAno[2]) + CIGARiteAno[3]
 													- 1 <= Integer.valueOf(temChrSite[1]) + 6) {
@@ -528,7 +529,7 @@ public class IsBSJScan2StarIntron extends IsBSJScan2Star {
 											for (int m = 0; m < readsMap.get(1 - n).size(); m++) {
 												String[] aligmentAno = readsMap.get(1 - n).get(m);
 												if (aligmentAno[1].equals(aligment[1])&& Integer.valueOf(aligmentAno[3]) >= minMapqUni) {
-													int[] CIGARiteAno = misd.misd(aligmentAno[4],temSeqLen);
+													int[] CIGARiteAno = misdInt.misd(aligmentAno[4],temSeqLen);
 													if (!aligmentAno[0].equals(aligment[0])&& Integer.valueOf(aligmentAno[2]) >= Integer
 														.valueOf(temChrSite[0]) - 6&& Integer.valueOf(aligmentAno[2]) + CIGARiteAno[3]
 														- 1 <= Integer.valueOf(temChrSite[1]) + 6) {
@@ -602,7 +603,7 @@ public class IsBSJScan2StarIntron extends IsBSJScan2Star {
 										for (int m = 0; m < readsMap.get(1 - n).size(); m++) {
 											String[] aligmentAno = readsMap.get(1 - n).get(m);
 											if (aligmentAno[1].equals(aligment[1])&& Integer.valueOf(aligmentAno[3]) >= minMapqUni) {
-												int[] CIGARiteAno = misd.misd(aligmentAno[4],temSeqLen);
+												int[] CIGARiteAno = misdInt.misd(aligmentAno[4],temSeqLen);
 												if (!aligmentAno[0].equals(aligment[0])&& Integer.valueOf(aligmentAno[2]) >= Integer
 													.valueOf(temChrSite[0]) - 6&& Integer.valueOf(aligmentAno[2]) + CIGARiteAno[3]
 													- 1 <= Integer.valueOf(temChrSite[1]) + 6) {
