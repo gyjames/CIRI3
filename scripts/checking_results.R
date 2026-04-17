@@ -1,13 +1,17 @@
 library(tidyverse)
 
-setwd("/pastel/tools/circRNA_tools/test_data/decoupled_comparison")
+# setwd("/pastel/tools/circRNA_tools/test_data/decoupled_comparison")
 setwd("/pastel/tools/circRNA_tools/test_data/decoupled_bwa_comparison")
 
 # Compare results from joint analysis 
+joint_res_df = read_tsv("original/result")
+head(joint_res_df)
 joint_BSJ_res = read_tsv("original/result.BSJ_Matrix")
 joint_FSJ_res = read_tsv("original/result.FSJ_Matrix")
 
 # Compare results from decoupled analysis
+decoupled_res_df = read_tsv("decoupled/finalize/result")
+head(decoupled_res_df)
 decoupled_BSJ_res = read_tsv("decoupled/finalize/result.BSJ_Matrix")
 decoupled_FSJ_res = read_tsv("decoupled/finalize/result.FSJ_Matrix")
 
