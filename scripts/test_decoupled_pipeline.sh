@@ -58,6 +58,16 @@ PASS=0
 FAIL=0
 
 # ---------------------------------------------------------------------------
+# Java commands — use the same JVM for both original and decoupled pipelines
+# so there is no version mismatch between the JAR and the compiled source.
+# ---------------------------------------------------------------------------
+JAVA_BIN="${CONDA_PREFIX}/bin/java"
+JAVAC_FLAGS="-source 8 -target 8"   # compile to class-file version 52 (Java 8)
+
+# JAVA_JAR="${JAVA_BIN} -jar ${CIRI3_JAR}"
+JAVA_SRC="${JAVA_BIN} -cp ${CLASSPATH} com.zx.test.TestParameters"
+
+# ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
 info()  { echo "[INFO]  $*"; }
@@ -118,20 +128,9 @@ trap cleanup EXIT
 # 0. Pre-flight checks
 # ---------------------------------------------------------------------------
 info "=== Pre-flight checks ==="
-command -v javac >/dev/null 2>&1 || die "javac not found — install JDK 11+"
-command -v java  >/dev/null 2>&1 || die "java not found"
-
-# Detect the installed Java major version (e.g. 11, 17, 21)
-JAVA_VERSION=$(java -version 2>&1 | head -1 | sed 's/.*version "\([0-9]*\).*/\1/')
-if [[ -z "$JAVA_VERSION" ]] || ! [[ "$JAVA_VERSION" =~ ^[0-9]+$ ]]; then
-    die "Could not determine Java version from: $(java -version 2>&1 | head -1)"
-fi
-if [[ "$JAVA_VERSION" -lt 11 ]]; then
-    die "Java $JAVA_VERSION detected — JDK 11 or newer is required"
-fi
-info "Detected Java version: $JAVA_VERSION"
 [[ -d "$DATA_DIR" ]] || die "Test data not found at $DATA_DIR"
 [[ -f "$REF_FA"  ]] || die "Reference FASTA not found at $REF_FA"
+[[ -x "$JAVA_BIN"  ]] || die "Java not found at: $JAVA_BIN (is the CIRI3 conda env active?)"
 
 SAMPLES=()
 for s in 1 2 3 4; do
@@ -142,24 +141,18 @@ done
 info "Found ${#SAMPLES[@]} sample SAM files."
 
 # ---------------------------------------------------------------------------
-# 1. Compile new source files
+# 1. Compile from source
+#    Compile to Java 8 class-file format (-source 8 -target 8) so the classes
+#    run on the Java 8 JVM bundled with the CIRI3 conda environment.
 # ---------------------------------------------------------------------------
-info "=== Compiling source files ==="
-mkdir -p "$BIN_DIR"
-
-# Collect all .java files
-JAVA_SOURCES=()
-while IFS= read -r -d '' f; do
-    JAVA_SOURCES+=("$f")
-done < <(find "$SRC_DIR" -name "*.java" -print0)
-
-info "Compiling ${#JAVA_SOURCES[@]} source files with --release $JAVA_VERSION..."
-javac --release "$JAVA_VERSION" \
-    -cp "$CLASSPATH" \
-    -d "$BIN_DIR" \
-    "${JAVA_SOURCES[@]}" 2>&1 \
-    || die "Compilation failed"
-info "Compilation succeeded."
+info "=== Compiling from source (target: Java 8) ==="
+find "${REPO_ROOT}/src" -name "*.java" > /tmp/ciri3_sources_$$.txt
+# shellcheck disable=SC2086
+javac ${JAVAC_FLAGS} -cp "${CLASSPATH}" -d "${BIN_DIR}" \
+    @/tmp/ciri3_sources_$$.txt 2>&1 \
+    | grep -v "^\(warning\|Note\)" || true
+rm -f /tmp/ciri3_sources_$$.txt
+info "Compilation complete."
 
 # ---------------------------------------------------------------------------
 # 2. Build sample list TSVs
