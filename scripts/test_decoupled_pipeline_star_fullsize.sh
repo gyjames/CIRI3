@@ -43,8 +43,6 @@ DATA_DIR=/pastel/tools/circRNA_tools/test_data
 REF_FA=${DATA_DIR}/GRCh38_full_analysis_set_plus_decoy_hla.fa
 GTF_FILE=${DATA_DIR}/gencode.v32.primary_assembly.annotation.gtf
 
-CIRI3_JAR=/pastel/tools/circRNA_tools/CIRI3/CIRI3_Java_18.0.1.jar
-
 SAMPLES=(
     "Div_100_S91"
     "Div_101_S92"
@@ -77,10 +75,13 @@ FAIL=0
 # Java commands — use the same JVM for both original and decoupled pipelines
 # so there is no version mismatch between the JAR and the compiled source.
 # ---------------------------------------------------------------------------
-JAVA_BIN="${CONDA_PREFIX}/bin/java"
+if [[ -n "${CONDA_PREFIX:-}" ]] && [[ -x "${CONDA_PREFIX}/bin/java" ]]; then
+    JAVA_BIN="${CONDA_PREFIX}/bin/java"
+else
+    JAVA_BIN="$(command -v java)"
+fi
 JAVAC_FLAGS="-source 8 -target 8"   # compile to class-file version 52 (Java 8)
 
-JAVA_JAR="${JAVA_BIN} -jar ${CIRI3_JAR}"
 JAVA_SRC="${JAVA_BIN} -cp ${CLASSPATH} com.zx.test.TestParameters"
 
 # ---------------------------------------------------------------------------
@@ -111,10 +112,9 @@ trap cleanup EXIT
 # 0. Pre-flight checks
 # ---------------------------------------------------------------------------
 info "=== Pre-flight checks ==="
-[[ -f "$REF_FA"    ]] || die "Reference FASTA not found: $REF_FA"
-[[ -f "$GTF_FILE"  ]] || die "GTF not found: $GTF_FILE"
-[[ -f "$CIRI3_JAR" ]] || die "CIRI3 JAR not found: $CIRI3_JAR"
-[[ -x "$JAVA_BIN"  ]] || die "Java not found at: $JAVA_BIN (is the CIRI3 conda env active?)"
+[[ -f "$REF_FA"   ]] || die "Reference FASTA not found: $REF_FA"
+[[ -f "$GTF_FILE" ]] || die "GTF not found: $GTF_FILE"
+[[ -x "$JAVA_BIN" ]] || die "Java not found at: $JAVA_BIN (is the CIRI3 conda env active?)"
 
 for S in "${SAMPLES[@]}"; do
     STAR_DIR="${DATA_DIR}/STAR_output_${S}"
@@ -142,9 +142,9 @@ rm -f /tmp/ciri3_sources_$$.txt
 info "Compilation complete."
 
 # ---------------------------------------------------------------------------
-# 2. ORIGINAL pipeline (-W 1, STAR mode, JAR)
+# 2. ORIGINAL pipeline (-W 1, STAR mode, compiled source)
 # ---------------------------------------------------------------------------
-info "=== Stage 0: ORIGINAL pipeline (-W 1, STAR, JAR) ==="
+info "=== Stage 0: ORIGINAL pipeline (-W 1, STAR, source) ==="
 
 ORIG_BSJ="${ORIG_DIR}/result.BSJ_Matrix"
 if [[ -s "$ORIG_BSJ" ]]; then
@@ -158,7 +158,7 @@ else
             >> "$ORIG_TSV"
     done
 
-    ${JAVA_JAR} \
+    ${JAVA_SRC} \
         -I  "${ORIG_TSV}" \
         -O  "${ORIG_DIR}/result" \
         -F  "${REF_FA}" \
