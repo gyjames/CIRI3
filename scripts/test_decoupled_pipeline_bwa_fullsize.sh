@@ -47,6 +47,8 @@ GTF_FILE=${DATA_DIR}/gencode.v32.primary_assembly.annotation.gtf
 SAMPLES=(
     "Div_100_S91"
     "Div_101_S92"
+    "PARDOS_1_S1"
+    "PARDOS_2_S2"
 )
 
 # ---------------------------------------------------------------------------
@@ -117,8 +119,8 @@ info "=== Pre-flight checks ==="
 [[ -x "$JAVA_BIN" ]] || die "Java not found at: $JAVA_BIN (is the CIRI3 conda env active?)"
 
 for S in "${SAMPLES[@]}"; do
-    STAR_DIR="${DATA_DIR}/STAR_output_${S}"
-    [[ -f "${STAR_DIR}/bwa.sam" ]] || die "Missing: ${STAR_DIR}/bwa.sam"
+    # STAR_DIR="${DATA_DIR}/STAR_output_${S}"
+    [[ -f "${DATA_DIR}/${S}.sam" ]] || die "Missing: ${S}.sam"
 done
 info "All input files found for ${#SAMPLES[@]} samples."
 info "Output directory: ${OUT_ROOT}"
@@ -149,8 +151,8 @@ else
     ORIG_TSV="${ORIG_DIR}/samples.tsv"
     > "$ORIG_TSV"
     for S in "${SAMPLES[@]}"; do
-        STAR_DIR="${DATA_DIR}/STAR_output_${S}"
-        echo "${STAR_DIR}/bwa.sam" >> "$ORIG_TSV"
+        # STAR_DIR="${DATA_DIR}/STAR_output_${S}"
+        echo "${DATA_DIR}/${S}.sam" >> "$ORIG_TSV"
     done
 
     ${JAVA_SRC} \
@@ -180,8 +182,8 @@ info "=== Decoupled pipeline (compiled source, BWA-only) ==="
 # --- Stage 1: SCAN1 (per sample) ---
 info "--- Stage 1: SCAN1 ---"
 for S in "${SAMPLES[@]}"; do
-    STAR_DIR="${DATA_DIR}/STAR_output_${S}"
-    BWA_SAM="${STAR_DIR}/bwa.sam"
+    # STAR_DIR="${DATA_DIR}/STAR_output_${S}"
+    BWA_SAM="${DATA_DIR}/${S}.sam"
     OUT_PREFIX="${SCAN1_DIR}/${S}"
     META="${OUT_PREFIX}.scan1_meta"
 
@@ -229,8 +231,8 @@ info "Universe: ${UNIVERSE_CIRCS} circRNA candidates."
 # --- Stage 3: SCAN2 (per sample) ---
 info "--- Stage 3: SCAN2 ---"
 for S in "${SAMPLES[@]}"; do
-    STAR_DIR="${DATA_DIR}/STAR_output_${S}"
-    BWA_SAM="${STAR_DIR}/bwa.sam"
+    # STAR_DIR="${DATA_DIR}/STAR_output_${S}"
+    BWA_SAM="${DATA_DIR}/${S}.sam"
     META="${SCAN1_DIR}/${S}.scan1_meta"
     SPLIT_NUM=$(grep "^fileSplitNum=" "${META}" | cut -d= -f2)
     OUT_PREFIX="${SCAN2_DIR}/${S}"

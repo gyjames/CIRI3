@@ -46,6 +46,8 @@ GTF_FILE=${DATA_DIR}/gencode.v32.primary_assembly.annotation.gtf
 SAMPLES=(
     "Div_100_S91"
     "Div_101_S92"
+    "PARDOS_1_S1"
+    "PARDOS_2_S2"
 )
 
 # ---------------------------------------------------------------------------
