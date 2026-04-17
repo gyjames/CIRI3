@@ -13,7 +13,7 @@
 #   --keep        do not delete the working directories after the test
 #
 # Requirements:
-#   - JDK 11+ (javac / java on PATH)
+#   - JDK 11+ (javac / java on PATH)  — any version 11 or newer is supported
 #   - The four sample SAM files in data/circRNA/Mutiple/
 #   - Reference FASTA at data/circRNA/ref.fa
 # =============================================================================
@@ -120,6 +120,16 @@ trap cleanup EXIT
 info "=== Pre-flight checks ==="
 command -v javac >/dev/null 2>&1 || die "javac not found — install JDK 11+"
 command -v java  >/dev/null 2>&1 || die "java not found"
+
+# Detect the installed Java major version (e.g. 11, 17, 21)
+JAVA_VERSION=$(java -version 2>&1 | head -1 | sed 's/.*version "\([0-9]*\).*/\1/')
+if [[ -z "$JAVA_VERSION" ]] || ! [[ "$JAVA_VERSION" =~ ^[0-9]+$ ]]; then
+    die "Could not determine Java version from: $(java -version 2>&1 | head -1)"
+fi
+if [[ "$JAVA_VERSION" -lt 11 ]]; then
+    die "Java $JAVA_VERSION detected — JDK 11 or newer is required"
+fi
+info "Detected Java version: $JAVA_VERSION"
 [[ -d "$DATA_DIR" ]] || die "Test data not found at $DATA_DIR"
 [[ -f "$REF_FA"  ]] || die "Reference FASTA not found at $REF_FA"
 
@@ -143,8 +153,8 @@ while IFS= read -r -d '' f; do
     JAVA_SOURCES+=("$f")
 done < <(find "$SRC_DIR" -name "*.java" -print0)
 
-info "Compiling ${#JAVA_SOURCES[@]} source files..."
-javac -source 11 -target 11 \
+info "Compiling ${#JAVA_SOURCES[@]} source files with --release $JAVA_VERSION..."
+javac --release "$JAVA_VERSION" \
     -cp "$CLASSPATH" \
     -d "$BIN_DIR" \
     "${JAVA_SOURCES[@]}" 2>&1 \
