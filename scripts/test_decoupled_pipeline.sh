@@ -61,10 +61,13 @@ FAIL=0
 # Java commands — use the same JVM for both original and decoupled pipelines
 # so there is no version mismatch between the JAR and the compiled source.
 # ---------------------------------------------------------------------------
-JAVA_BIN="${CONDA_PREFIX}/bin/java"
+if [[ -n "${CONDA_PREFIX:-}" ]] && [[ -x "${CONDA_PREFIX}/bin/java" ]]; then
+    JAVA_BIN="${CONDA_PREFIX}/bin/java"
+else
+    JAVA_BIN="$(command -v java)"
+fi
 JAVAC_FLAGS="-source 8 -target 8"   # compile to class-file version 52 (Java 8)
 
-# JAVA_JAR="${JAVA_BIN} -jar ${CIRI3_JAR}"
 JAVA_SRC="${JAVA_BIN} -cp ${CLASSPATH} com.zx.test.TestParameters"
 
 # ---------------------------------------------------------------------------
@@ -178,7 +181,7 @@ FINALIZE_TSV="$FINALIZE_DIR/finalize_samples.tsv"
 # 3. Run ORIGINAL pipeline (-W 1)
 # ---------------------------------------------------------------------------
 info "=== Running ORIGINAL pipeline (-W 1) ==="
-java -cp "$CLASSPATH" "$MAIN_CLASS" \
+${JAVA_BIN} -cp "${CLASSPATH}" "${MAIN_CLASS}" \
     -I "$ORIG_SAMPLES_TSV" \
     -O "$ORIG_DIR/result" \
     -F "$REF_FA" \
@@ -206,7 +209,7 @@ for SAM in "${SAMPLES[@]}"; do
     SAMPLE_NAME=$(basename "$SAM" .sam)
     OUT_PREFIX="$SCAN1_DIR/${SAMPLE_NAME}"
     info "  SCAN1: $SAMPLE_NAME"
-    java -cp "$CLASSPATH" "$MAIN_CLASS" SCAN1 \
+    ${JAVA_BIN} -cp "${CLASSPATH}" "${MAIN_CLASS}" SCAN1 \
         -I "$SAM" \
         -O "$OUT_PREFIX" \
         -F "$REF_FA" \
@@ -228,7 +231,7 @@ done
 
 # --- Stage 2a: BUILD_UNIVERSE ---
 info "--- Stage 2a: BUILD_UNIVERSE ---"
-java -cp "$CLASSPATH" "$MAIN_CLASS" BUILD_UNIVERSE \
+${JAVA_BIN} -cp "${CLASSPATH}" "${MAIN_CLASS}" BUILD_UNIVERSE \
     -I "$SCAN1_META_TSV" \
     -F "$REF_FA" \
     -O "$UNIVERSE_DIR/cohort" \
@@ -245,7 +248,7 @@ for SAM in "${SAMPLES[@]}"; do
     SPLIT_NUM=$(grep "^fileSplitNum=" "$SCAN1_META" | cut -d= -f2)
     OUT_PREFIX="$SCAN2_DIR/${SAMPLE_NAME}"
     info "  SCAN2: $SAMPLE_NAME"
-    java -cp "$CLASSPATH" "$MAIN_CLASS" SCAN2 \
+    ${JAVA_BIN} -cp "${CLASSPATH}" "${MAIN_CLASS}" SCAN2 \
         -I "$SAM" \
         -CU "$UNIVERSE_DIR/cohort.universe" \
         -O "$OUT_PREFIX" \
@@ -259,7 +262,7 @@ done
 
 # --- Stage 2b: FINALIZE ---
 info "--- Stage 2b: FINALIZE ---"
-java -cp "$CLASSPATH" "$MAIN_CLASS" FINALIZE \
+${JAVA_BIN} -cp "${CLASSPATH}" "${MAIN_CLASS}" FINALIZE \
     -I "$FINALIZE_TSV" \
     -F "$REF_FA" \
     -O "$FINALIZE_DIR/result" \
