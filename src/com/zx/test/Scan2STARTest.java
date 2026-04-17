@@ -220,13 +220,13 @@ public class Scan2STARTest {
                             }
                         }
                         HashMap<String, Integer> circFSJMapTem = scan2.getCircFSJMap();
-                        scan2.setFSJScan2List();
-                        scan2 = null;
                         lock.lock();
                         for (String circKey : circFSJMap.keySet()) {
                             circFSJMap.put(circKey, circFSJMap.get(circKey) + circFSJMapTem.get(circKey));
                         }
                         lock.unlock();
+                        scan2.setFSJScan2List();
+                        scan2 = null;
                         circFSJMapTem = null;
                         threadSub.await(); // [B] bwa scan2 done
                         threadMain.await(); // [C] wait for star scan2 start
@@ -247,14 +247,14 @@ public class Scan2STARTest {
                         }
                         circFSJMapTem = starScan2.getCircFSJMap();
                         long matchNumTem = starScan2.getReadNum();
-                        starScan2.setFSJScan2List();
-                        starScan2 = null;
                         lock.lock();
                         for (String circKey : circFSJMap.keySet()) {
                             circFSJMap.put(circKey, circFSJMap.get(circKey) + circFSJMapTem.get(circKey));
                         }
                         matchNum = matchNum + matchNumTem;
                         lock.unlock();
+                        starScan2.setFSJScan2List();
+                        starScan2 = null;
                         circFSJMapTem = null;
                         threadSub.await(); // [D] star scan2 done
                         threadMain.await(); // [E] wait for final release, then exit
