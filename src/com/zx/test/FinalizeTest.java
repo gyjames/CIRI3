@@ -150,18 +150,22 @@ public class FinalizeTest {
         }
         System.out.println(df.format(System.currentTimeMillis()) + " :FSJ counts merged: " + circFSJMerged.size() + " circRNAs");
 
-        // Step 5: Build BSJ matrix from SCAN1 BSJ files (SCAN2 appends additional BSJ reads to the same files)
+        // Step 5: Build BSJ matrix from BSJ files (SCAN2 appends additional BSJ reads to the same files)
         int[][] BSJmatrix = new int[circNum][sampleCount];
         for (int i = 0; i < sampleCount; i++) {
             HashMap<String, Integer> circMap = new HashMap<String, Integer>();
             String samFilePath = filePathList.get(i);
             int splitNum = fileSplitNumMap.get(samFilePath);
+            long totalLines = 0, tagOneLines = 0, unknownCirc = 0;
             for (int j = 1; j <= splitNum; j++) {
+                long fileLines = 0, fileTagOne = 0;
                 BufferedReader BSJBr = new BufferedReader(new FileReader(new File(samFilePath + "BSJ" + j)));
                 String line = BSJBr.readLine();
                 while (line != null) {
+                    fileLines++;
                     String[] circLineArr = line.split("\t", 7);
                     if (circLineArr[2].equals("1")) {
+                        fileTagOne++;
                         String chrStartEnd = circLineArr[3] + "\t" + circLineArr[4] + "\t" + circLineArr[5];
                         if (!circMap.containsKey(chrStartEnd)) {
                             circMap.put(chrStartEnd, 1);
@@ -172,12 +176,18 @@ public class FinalizeTest {
                     line = BSJBr.readLine();
                 }
                 BSJBr.close();
+                totalLines += fileLines;
+                tagOneLines += fileTagOne;
+                System.out.println(df.format(System.currentTimeMillis()) + " :DIAG sample[" + i + "] BSJ" + j + ": total=" + fileLines + " tag1=" + fileTagOne);
             }
             for (String circKey : circMap.keySet()) {
                 if (circRowMap.containsKey(circKey)) {
                     BSJmatrix[circRowMap.get(circKey)][i] = circMap.get(circKey);
+                } else {
+                    unknownCirc++;
                 }
             }
+            System.out.println(df.format(System.currentTimeMillis()) + " :DIAG sample[" + i + "] name=" + sampleNameList.get(i) + " bsj_total=" + totalLines + " tag1=" + tagOneLines + " circRNAs_in_universe=" + circMap.size() + " circRNAs_not_in_universe=" + unknownCirc);
         }
         System.out.println(df.format(System.currentTimeMillis()) + " :BSJ matrix built");
 

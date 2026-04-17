@@ -181,6 +181,24 @@ public class Scan1STARTest {
             threadMain.reset();
             threadSub.await(); // wait for scan1 done
 
+            // Log BSJ file counts after scan1
+            long bsjTotal = 0, bsjTagOne = 0;
+            for (int k = 1; k <= AllFileSplitNum; k++) {
+                java.io.File bsjFile = new java.io.File(bwaSamFile + "BSJ" + k);
+                long fl = 0, ft1 = 0;
+                if (bsjFile.exists()) {
+                    java.io.BufferedReader bsjBr = new java.io.BufferedReader(new java.io.FileReader(bsjFile));
+                    String bsjLn = bsjBr.readLine();
+                    while (bsjLn != null) { fl++; String[] c = bsjLn.split("\t", 7); if (c.length > 2 && c[2].equals("1")) ft1++; bsjLn = bsjBr.readLine(); }
+                    bsjBr.close();
+                }
+                bsjTotal += fl; bsjTagOne += ft1;
+                System.out.println(df.format(System.currentTimeMillis()) + " :DIAG scan1 BSJ" + k + ": total=" + fl + " tag1=" + ft1);
+                fileLog.write(df.format(System.currentTimeMillis()) + " :DIAG scan1 BSJ" + k + ": total=" + fl + " tag1=" + ft1 + "\n");
+            }
+            System.out.println(df.format(System.currentTimeMillis()) + " :DIAG scan1 BSJ_TOTAL: total=" + bsjTotal + " tag1=" + bsjTagOne + " readLen=" + seqLen);
+            fileLog.write(df.format(System.currentTimeMillis()) + " :DIAG scan1 BSJ_TOTAL: total=" + bsjTotal + " tag1=" + bsjTagOne + " readLen=" + seqLen + "\n");
+
             // Write scan1_meta
             String metaPath = outputFile + ".scan1_meta";
             BufferedWriter metaBw = new BufferedWriter(new FileWriter(new File(metaPath)));

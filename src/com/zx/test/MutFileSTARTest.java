@@ -365,9 +365,9 @@ public class MutFileSTARTest {
 				    threadMain.reset();//更新主线程
 					threadSub.await();//主线程关闭，子线程激活2  
 			    }	
-			    System.out.println(df.format(System.currentTimeMillis())+" "+":First scan completed");  
-			    fileLog.write(df.format(System.currentTimeMillis())+" "+":First scan completed"+"\n");			    
-			    //导入文件			
+			    System.out.println(df.format(System.currentTimeMillis())+" "+":First scan completed");
+			    fileLog.write(df.format(System.currentTimeMillis())+" "+":First scan completed"+"\n");
+			    //导入文件
 				//存放每个sam文件第一遍扫描circRNA的ID Num
 			    HashMap<String, String> scan1IdMap;
 				for (int i = 0; i < filePathList.size(); i++) {
@@ -375,12 +375,18 @@ public class MutFileSTARTest {
 					String samFile = filePathList.get(i);
 					String[] samFileArr = samFile.split(",");
 			 		bwaSamFile = samFileArr[2];
-					for (int j = 1; j <= AllFileSplitNum; j++) {					
+			 		long origBsjTotal = 0, origBsjTagOne = 0;
+					for (int j = 1; j <= AllFileSplitNum; j++) {
+						long fl = 0, ft1 = 0;
 						BufferedReader BSJbr = new BufferedReader(new FileReader(new File(bwaSamFile+"BSJ"+j)));
 						String line = BSJbr.readLine();
 						while (line != null) {
+							fl++;
 							String[] BSJArr = line.split("\t",5);
 							scan1IdMap.put(BSJArr[0], "");
+							// diagnostic tag1 check uses a separate 7-split
+							String[] diagArr = line.split("\t",7);
+							if (diagArr.length > 2 && diagArr[2].equals("1")) ft1++;
 							if(!chrCircSiteMap.containsKey(BSJArr[3])) {
 								circSiteSet = new HashSet<String>();
 								circSiteSet.add(BSJArr[4]);
@@ -393,7 +399,12 @@ public class MutFileSTARTest {
 							line = BSJbr.readLine();
 						}
 						BSJbr.close();
-					}	
+						origBsjTotal += fl; origBsjTagOne += ft1;
+						System.out.println(df.format(System.currentTimeMillis())+" :DIAG_ORIG after_scan1 sample["+i+"] BSJ"+j+": total="+fl+" tag1="+ft1);
+						fileLog.write(df.format(System.currentTimeMillis())+" :DIAG_ORIG after_scan1 sample["+i+"] BSJ"+j+": total="+fl+" tag1="+ft1+"\n");
+					}
+					System.out.println(df.format(System.currentTimeMillis())+" :DIAG_ORIG after_scan1 sample["+i+"] bwaSam="+bwaSamFile+" bsj_total="+origBsjTotal+" tag1="+origBsjTagOne+" idCircMap="+scan1IdMap.size());
+					fileLog.write(df.format(System.currentTimeMillis())+" :DIAG_ORIG after_scan1 sample["+i+"] bwaSam="+bwaSamFile+" bsj_total="+origBsjTotal+" tag1="+origBsjTagOne+" idCircMap="+scan1IdMap.size()+"\n");
 					allIdCircMap.put(samFile, scan1IdMap);
 				}			    
 			}else {
@@ -628,17 +639,21 @@ public class MutFileSTARTest {
 				circFSJMap = null;
 				//整理BSJMatrix
 		        HashMap<String, Integer> circMap = new HashMap<String, Integer>();
-		        
+
 		        for (int i = 0; i < NewFilePathList.size(); i++) {
 		        	circMap.clear();
 					String samFile = NewFilePathList.get(i);
 					 AllFileSplitNum = fileSplitNumMap.get(samFile);
+					long origTotalLines = 0, origTagOneLines = 0;
 					for (int j = 1; j <= AllFileSplitNum; j++) {
-						BufferedReader BSJBr = new BufferedReader(new FileReader(new File(samFile+"BSJ"+j)));	
+						long fileLines = 0, fileTagOne = 0;
+						BufferedReader BSJBr = new BufferedReader(new FileReader(new File(samFile+"BSJ"+j)));
 						String line = BSJBr.readLine();
-						while (line != null ) {					
-							String[] circLineArr = line.split("\t",7);				
+						while (line != null ) {
+							fileLines++;
+							String[] circLineArr = line.split("\t",7);
 							if (circLineArr[2].equals("1")) {
+								fileTagOne++;
 								String chrStartEnd = circLineArr[3] + "\t" + circLineArr[4] + "\t" + circLineArr[5];
 								if (!circMap.containsKey(chrStartEnd)) {
 									circMap.put(chrStartEnd, 1);
@@ -647,10 +662,15 @@ public class MutFileSTARTest {
 									circMap.put(chrStartEnd, temNum+1);
 								}
 							}
-							line = BSJBr.readLine();					
+							line = BSJBr.readLine();
 						}
 						BSJBr.close();
-					}					
+						origTotalLines += fileLines; origTagOneLines += fileTagOne;
+						System.out.println(df.format(System.currentTimeMillis())+" :DIAG_ORIG sample["+i+"] BSJ"+j+": total="+fileLines+" tag1="+fileTagOne);
+						fileLog.write(df.format(System.currentTimeMillis())+" :DIAG_ORIG sample["+i+"] BSJ"+j+": total="+fileLines+" tag1="+fileTagOne+"\n");
+					}
+					System.out.println(df.format(System.currentTimeMillis())+" :DIAG_ORIG sample["+i+"] samFile="+samFile+" bsj_total="+origTotalLines+" tag1="+origTagOneLines+" circRNAs="+circMap.size());
+					fileLog.write(df.format(System.currentTimeMillis())+" :DIAG_ORIG sample["+i+"] samFile="+samFile+" bsj_total="+origTotalLines+" tag1="+origTagOneLines+" circRNAs="+circMap.size()+"\n");
 					for (String circKey : circMap.keySet()) {
 						BSJmatrix[circRowMap.get(circKey)][i] = circMap.get(circKey);
 					}

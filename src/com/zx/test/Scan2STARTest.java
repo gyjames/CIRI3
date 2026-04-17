@@ -170,16 +170,28 @@ public class Scan2STARTest {
 
         // Build all-upfront idCircMap from all SCAN1 BSJ files (matches original -Ma 1 pipeline)
         HashMap<String, String> idCircMap = new HashMap<String, String>();
+        long bsjTotalAfterScan1 = 0;
+        long bsjTagOneAfterScan1 = 0;
         for (int i = 1; i <= bwaFileSplitNum; i++) {
+            long fileLines = 0, fileTagOne = 0;
             BufferedReader BSJbr = new BufferedReader(new FileReader(new File(bwaSamFile + "BSJ" + i)));
             String bsjLine = BSJbr.readLine();
             while (bsjLine != null) {
                 String[] BSJArr = bsjLine.split("\t", 2);
                 idCircMap.put(BSJArr[0], "");
+                fileLines++;
+                String[] cols = bsjLine.split("\t", 7);
+                if (cols.length > 2 && cols[2].equals("1")) fileTagOne++;
                 bsjLine = BSJbr.readLine();
             }
             BSJbr.close();
+            bsjTotalAfterScan1 += fileLines;
+            bsjTagOneAfterScan1 += fileTagOne;
+            System.out.println(df.format(System.currentTimeMillis()) + " :DIAG after_scan1 BSJ" + i + ": total=" + fileLines + " tag1=" + fileTagOne);
+            fileLog.write(df.format(System.currentTimeMillis()) + " :DIAG after_scan1 BSJ" + i + ": total=" + fileLines + " tag1=" + fileTagOne + "\n");
         }
+        System.out.println(df.format(System.currentTimeMillis()) + " :DIAG after_scan1 BSJ_TOTAL: total=" + bsjTotalAfterScan1 + " tag1=" + bsjTagOneAfterScan1);
+        fileLog.write(df.format(System.currentTimeMillis()) + " :DIAG after_scan1 BSJ_TOTAL: total=" + bsjTotalAfterScan1 + " tag1=" + bsjTagOneAfterScan1 + "\n");
         System.out.println(df.format(System.currentTimeMillis()) + " :idCircMap loaded: " + idCircMap.size() + " reads");
         fileLog.write(df.format(System.currentTimeMillis()) + " :idCircMap loaded: " + idCircMap.size() + " reads\n");
 
@@ -262,6 +274,21 @@ public class Scan2STARTest {
             System.out.println(df.format(System.currentTimeMillis()) + " :BWA unmapped scan2 completed");
             fileLog.write(df.format(System.currentTimeMillis()) + " :BWA unmapped scan2 completed\n");
 
+            // Log BSJ counts after BWA scan2
+            long bsjTotalAfterBwa = 0, bsjTagOneAfterBwa = 0;
+            for (int i = 1; i <= bwaFileSplitNum; i++) {
+                long fl = 0, ft1 = 0;
+                BufferedReader br = new BufferedReader(new FileReader(new File(bwaSamFile + "BSJ" + i)));
+                String ln = br.readLine();
+                while (ln != null) { fl++; String[] c = ln.split("\t", 7); if (c.length > 2 && c[2].equals("1")) ft1++; ln = br.readLine(); }
+                br.close();
+                bsjTotalAfterBwa += fl; bsjTagOneAfterBwa += ft1;
+                System.out.println(df.format(System.currentTimeMillis()) + " :DIAG after_bwa_scan2 BSJ" + i + ": total=" + fl + " tag1=" + ft1);
+                fileLog.write(df.format(System.currentTimeMillis()) + " :DIAG after_bwa_scan2 BSJ" + i + ": total=" + fl + " tag1=" + ft1 + "\n");
+            }
+            System.out.println(df.format(System.currentTimeMillis()) + " :DIAG after_bwa_scan2 BSJ_TOTAL: total=" + bsjTotalAfterBwa + " tag1=" + bsjTagOneAfterBwa);
+            fileLog.write(df.format(System.currentTimeMillis()) + " :DIAG after_bwa_scan2 BSJ_TOTAL: total=" + bsjTotalAfterBwa + " tag1=" + bsjTagOneAfterBwa + "\n");
+
             // Compute AllFileSplitNum for STAR SAM
             File starFile = new File(starSamFile);
             long fileSizeGB = starFile.length() / 1024 / 1024 / 1024;
@@ -282,6 +309,21 @@ public class Scan2STARTest {
             System.out.println(df.format(System.currentTimeMillis()) + " :Mapped_Reads " + matchNum);
             fileLog.write(df.format(System.currentTimeMillis()) + " :STAR scan2 completed\n");
             fileLog.write(df.format(System.currentTimeMillis()) + " :Mapped_Reads " + matchNum + "\n");
+
+            // Log BSJ counts after STAR scan2
+            long bsjTotalAfterStar = 0, bsjTagOneAfterStar = 0;
+            for (int i = 1; i <= AllFileSplitNum; i++) {
+                long fl = 0, ft1 = 0;
+                BufferedReader br = new BufferedReader(new FileReader(new File(bwaSamFile + "BSJ" + i)));
+                String ln = br.readLine();
+                while (ln != null) { fl++; String[] c = ln.split("\t", 7); if (c.length > 2 && c[2].equals("1")) ft1++; ln = br.readLine(); }
+                br.close();
+                bsjTotalAfterStar += fl; bsjTagOneAfterStar += ft1;
+                System.out.println(df.format(System.currentTimeMillis()) + " :DIAG after_star_scan2 BSJ" + i + ": total=" + fl + " tag1=" + ft1);
+                fileLog.write(df.format(System.currentTimeMillis()) + " :DIAG after_star_scan2 BSJ" + i + ": total=" + fl + " tag1=" + ft1 + "\n");
+            }
+            System.out.println(df.format(System.currentTimeMillis()) + " :DIAG after_star_scan2 BSJ_TOTAL: total=" + bsjTotalAfterStar + " tag1=" + bsjTagOneAfterStar);
+            fileLog.write(df.format(System.currentTimeMillis()) + " :DIAG after_star_scan2 BSJ_TOTAL: total=" + bsjTotalAfterStar + " tag1=" + bsjTagOneAfterStar + "\n");
 
             // Cleanup site maps
             chrSiteMap1 = null;
