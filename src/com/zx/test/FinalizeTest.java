@@ -47,7 +47,6 @@ public class FinalizeTest {
         ArrayList<String> filePathList = new ArrayList<String>();
         HashMap<String, Integer> fileSplitNumMap = new HashMap<String, Integer>();
         ArrayList<String> fsjCountsFileList = new ArrayList<String>();
-        ArrayList<String> bsjCountsFileList = new ArrayList<String>();
         ArrayList<String> sampleNameList = new ArrayList<String>();
 
         BufferedReader tsvBr = new BufferedReader(new FileReader(new File(finalizeInputTsv)));
@@ -62,11 +61,9 @@ public class FinalizeTest {
             String fsjCountsPath = arr[1].trim();
             int splitNum = Integer.parseInt(arr[2].trim());
             String sampleName = arr[3].trim();
-            String bsjCountsPath = arr.length > 4 ? arr[4].trim() : "";
             filePathList.add(samFilePath);
             fileSplitNumMap.put(samFilePath, splitNum);
             fsjCountsFileList.add(fsjCountsPath);
-            bsjCountsFileList.add(bsjCountsPath);
             sampleNameList.add(sampleName);
             tsvLine = tsvBr.readLine();
         }
@@ -153,13 +150,12 @@ public class FinalizeTest {
         }
         System.out.println(df.format(System.currentTimeMillis()) + " :FSJ counts merged: " + circFSJMerged.size() + " circRNAs");
 
-        // Step 5: Build BSJ matrix from SCAN1 BSJ files + SCAN2 bsj_counts
+        // Step 5: Build BSJ matrix from SCAN1 BSJ files (SCAN2 appends additional BSJ reads to the same files)
         int[][] BSJmatrix = new int[circNum][sampleCount];
         for (int i = 0; i < sampleCount; i++) {
             HashMap<String, Integer> circMap = new HashMap<String, Integer>();
             String samFilePath = filePathList.get(i);
             int splitNum = fileSplitNumMap.get(samFilePath);
-            // SCAN1 BSJ file counts
             for (int j = 1; j <= splitNum; j++) {
                 BufferedReader BSJBr = new BufferedReader(new FileReader(new File(samFilePath + "BSJ" + j)));
                 String line = BSJBr.readLine();
@@ -181,22 +177,6 @@ public class FinalizeTest {
                 if (circRowMap.containsKey(circKey)) {
                     BSJmatrix[circRowMap.get(circKey)][i] = circMap.get(circKey);
                 }
-            }
-            // SCAN2 additional BSJ counts (from .bsj_counts written by Scan2STARTest)
-            String bsjCountsPath = bsjCountsFileList.get(i);
-            if (!bsjCountsPath.isEmpty() && new File(bsjCountsPath).exists()) {
-                BufferedReader bsjBr = new BufferedReader(new FileReader(new File(bsjCountsPath)));
-                String line = bsjBr.readLine();
-                while (line != null) {
-                    String[] parts = line.split("\t");
-                    String circKey = parts[0] + "\t" + parts[1] + "\t" + parts[2];
-                    int count = Integer.parseInt(parts[3]);
-                    if (count > 0 && circRowMap.containsKey(circKey)) {
-                        BSJmatrix[circRowMap.get(circKey)][i] += count;
-                    }
-                    line = bsjBr.readLine();
-                }
-                bsjBr.close();
             }
         }
         System.out.println(df.format(System.currentTimeMillis()) + " :BSJ matrix built");

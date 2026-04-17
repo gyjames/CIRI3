@@ -244,9 +244,8 @@ for S in "${SAMPLES[@]}"; do
     SPLIT_NUM=$(grep "^fileSplitNum=" "${META}" | cut -d= -f2)
     OUT_PREFIX="${SCAN2_DIR}/${S}"
     FSJ_COUNTS="${OUT_PREFIX}.fsj_counts"
-    BSJ_COUNTS="${OUT_PREFIX}.bsj_counts"
 
-    if [[ -s "$FSJ_COUNTS" ]] && [[ -s "$BSJ_COUNTS" ]]; then
+    if [[ -s "$FSJ_COUNTS" ]]; then
         info "  [SKIP] SCAN2 already done for $S"
     else
         info "  SCAN2: $S"
@@ -259,9 +258,8 @@ for S in "${SAMPLES[@]}"; do
             2>&1 | grep -E "scan|FSJ|BSJ|time" || true
     fi
     check_exists "SCAN2 FSJ counts ($S)" "${FSJ_COUNTS}"
-    check_exists "SCAN2 BSJ counts ($S)" "${BSJ_COUNTS}"
 
-    echo -e "${BWA_SAM}\t${FSJ_COUNTS}\t${SPLIT_NUM}\t${S}\t${BSJ_COUNTS}" >> "$FINALIZE_TSV"
+    echo -e "${BWA_SAM}\t${FSJ_COUNTS}\t${SPLIT_NUM}\t${S}" >> "$FINALIZE_TSV"
 done
 
 # --- Stage 4: FINALIZE ---

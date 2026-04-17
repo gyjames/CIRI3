@@ -19,8 +19,8 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import com.zx.findcircrna.BamToSam;
 import com.zx.findcircrna.CircRNAUniverseIO;
-import com.zx.findcircrna.MutUserFindCircRNAScan2;
-import com.zx.findcircrna.MutUserFindCircRNASTARScan2;
+import com.zx.findcircrna.MutFindCircRNAScan2;
+import com.zx.findcircrna.MutFindCircRNASTARScan2;
 import com.zx.findcircrna.ReadFaFile;
 import com.zx.findcircrna.SiteSort;
 
@@ -42,14 +42,13 @@ public class Scan2STARTest {
     public static String bwaSamFile, starSamFile;
     private static Lock lock = new ReentrantLock();
     private static HashMap<String, Integer> circFSJMap;
-    private static HashMap<String, Integer> circBSJMap;
     private static HashMap<String, String> chrTCGAMap;
     private static HashMap<String, HashMap<Integer, ArrayList<SiteSort>>> chrSiteMap1, chrSiteMap2;
     public static HashMap<String, byte[]> siteArrayMap1, siteArrayMap2;
 
     /**
      * inputFile:    comma-separated "chimericPath,starSamPath,unmappedSamPath" (same as SCAN1 STAR input)
-     * outputFile:   output prefix; writes {outputFile}.fsj_counts and {outputFile}.bsj_counts
+     * outputFile:   output prefix; writes {outputFile}.fsj_counts
      * universeFile: path to .universe file from BUILD_UNIVERSE
      * faFile:       FASTA reference genome
      * annotationFile: "F" or annotation path (not used directly, kept for symmetry)
@@ -157,10 +156,6 @@ public class Scan2STARTest {
         chrUniverseMap = null;
         universeDataMap = null;
 
-        // Initialize circBSJMap from circFSJMap (all zeros)
-        circBSJMap = new HashMap<String, Integer>();
-        circBSJMap.putAll(circFSJMap);
-
         // Step 4: Determine AllFileSplitNum for bwaSamFile from BSJ file count
         AllFileSplitNum = 0;
         while (new File(bwaSamFile + "BSJ" + (AllFileSplitNum + 1)).exists()) {
@@ -173,8 +168,7 @@ public class Scan2STARTest {
         }
         final int bwaFileSplitNum = AllFileSplitNum;
 
-        // Build idCircMap from all SCAN1 BSJ files (used for BWA scan2 phase;
-        // since BWA SAM chunks are disjoint, this is equivalent to per-chunk scan1IdMap)
+        // Build all-upfront idCircMap from all SCAN1 BSJ files (matches original -Ma 1 pipeline)
         HashMap<String, String> idCircMap = new HashMap<String, String>();
         for (int i = 1; i <= bwaFileSplitNum; i++) {
             BufferedReader BSJbr = new BufferedReader(new FileReader(new File(bwaSamFile + "BSJ" + i)));
@@ -189,7 +183,6 @@ public class Scan2STARTest {
         System.out.println(df.format(System.currentTimeMillis()) + " :idCircMap loaded: " + idCircMap.size() + " reads");
         fileLog.write(df.format(System.currentTimeMillis()) + " :idCircMap loaded: " + idCircMap.size() + " reads\n");
 
-        // --- Phase A: BWA scan2 ---
         ExecutorService poolExe = Executors.newFixedThreadPool(threads);
         final CyclicBarrier threadSub = new CyclicBarrier(threads + 1);
         final CyclicBarrier threadMain = new CyclicBarrier(threads + 1);
@@ -199,11 +192,11 @@ public class Scan2STARTest {
             Runnable runnable = new Runnable() {
                 public void run() {
                     try {
-                        // Phase A: BWA scan2
+                        // Phase A: BWA scan2 — appends new BSJ reads to BSJ files
                         threadMain.await();
-                        MutUserFindCircRNAScan2 scan2 = new MutUserFindCircRNAScan2(minMapqUni, circFSJMap,
+                        MutFindCircRNAScan2 scan2 = new MutFindCircRNAScan2(minMapqUni, circFSJMap,
                                 linear_range_size_min, siteArrayMap1, siteArrayMap2, chrSiteMap1, chrSiteMap2,
-                                chrTCGAMap, seqLen);
+                                chrTCGAMap, seqLen, intronLable);
                         while (true) {
                             int threadNum = incr.getAndIncrement();
                             if (threadNum > bwaFileSplitNum) {
@@ -215,61 +208,42 @@ public class Scan2STARTest {
                             }
                         }
                         HashMap<String, Integer> circFSJMapTem = scan2.getCircFSJMap();
-                        HashMap<String, Integer> circBSJMapTem = scan2.getCircBSJMap();
+                        scan2.setFSJScan2List();
                         scan2 = null;
                         lock.lock();
                         for (String circKey : circFSJMap.keySet()) {
                             circFSJMap.put(circKey, circFSJMap.get(circKey) + circFSJMapTem.get(circKey));
-                            circBSJMap.put(circKey, circBSJMap.get(circKey) + circBSJMapTem.get(circKey));
                         }
                         lock.unlock();
                         circFSJMapTem = null;
-                        circBSJMapTem = null;
                         threadSub.await(); // [B] bwa scan2 done
                         threadMain.await(); // [C] wait for star scan2 start
 
-                        // Phase B: STAR scan2 - use MutUserFindCircRNASTARScan2 to capture circBSJMap.
-                        // Build per-chunk scan1IdMap from BSJ file N (matching original pipeline behavior).
-                        MutUserFindCircRNASTARScan2 starScan2 = new MutUserFindCircRNASTARScan2(minMapqUni, circFSJMap,
+                        // Phase B: STAR scan2 — appends new BSJ reads to BSJ files
+                        MutFindCircRNASTARScan2 starScan2 = new MutFindCircRNASTARScan2(minMapqUni, circFSJMap,
                                 linear_range_size_min, siteArrayMap1, siteArrayMap2, chrSiteMap1, chrSiteMap2,
-                                chrTCGAMap, seqLen);
-                        starScan2.setFSJScan2List();
+                                chrTCGAMap, seqLen, intronLable);
                         while (true) {
                             int threadNum = incr.getAndIncrement();
                             if (threadNum > AllFileSplitNum) {
                                 break;
                             } else {
-                                // Load scan1IdMap for this chunk from the corresponding BSJ file
-                                HashMap<String, String> scan1IdMap = new HashMap<String, String>();
-                                if (threadNum <= bwaFileSplitNum) {
-                                    BufferedReader BSJbr = new BufferedReader(new FileReader(
-                                            new File(bwaSamFile + "BSJ" + threadNum)));
-                                    String bsjLine = BSJbr.readLine();
-                                    while (bsjLine != null) {
-                                        String[] BSJArr = bsjLine.split("\t", 2);
-                                        scan1IdMap.put(BSJArr[0], "");
-                                        bsjLine = BSJbr.readLine();
-                                    }
-                                    BSJbr.close();
-                                }
-                                starScan2.findCircRNAScan2(starSamFile, scan1IdMap, AllFileSplitNum, threadNum);
+                                starScan2.findCircRNAScan2(starSamFile, idCircMap, AllFileSplitNum, threadNum, bwaSamFile);
                                 System.out.println(df.format(System.currentTimeMillis()) + " :starsam Second scan completed " + threadNum);
                                 fileLog.write(df.format(System.currentTimeMillis()) + " :starsam Second scan completed " + threadNum + "\n");
                             }
                         }
                         circFSJMapTem = starScan2.getCircFSJMap();
-                        circBSJMapTem = starScan2.getCircBSJMap();
                         long matchNumTem = starScan2.getReadNum();
+                        starScan2.setFSJScan2List();
                         starScan2 = null;
                         lock.lock();
                         for (String circKey : circFSJMap.keySet()) {
                             circFSJMap.put(circKey, circFSJMap.get(circKey) + circFSJMapTem.get(circKey));
-                            circBSJMap.put(circKey, circBSJMap.get(circKey) + circBSJMapTem.get(circKey));
                         }
                         matchNum = matchNum + matchNumTem;
                         lock.unlock();
                         circFSJMapTem = null;
-                        circBSJMapTem = null;
                         threadSub.await(); // [D] star scan2 done
                         threadMain.await(); // [E] wait for final release, then exit
                     } catch (Exception e) {
@@ -321,13 +295,6 @@ public class Scan2STARTest {
             circFSJMap = null;
             System.out.println(df.format(System.currentTimeMillis()) + " :FSJ counts written to " + fsjCountsPath);
             fileLog.write(df.format(System.currentTimeMillis()) + " :FSJ counts written to " + fsjCountsPath + "\n");
-
-            // Write BSJ counts from SCAN2 (additional BSJ reads found via linear-alignment analysis)
-            String bsjCountsPath = outputFile + ".bsj_counts";
-            CircRNAUniverseIO.writeFSJCounts(bsjCountsPath, circBSJMap);
-            circBSJMap = null;
-            System.out.println(df.format(System.currentTimeMillis()) + " :BSJ counts written to " + bsjCountsPath);
-            fileLog.write(df.format(System.currentTimeMillis()) + " :BSJ counts written to " + bsjCountsPath + "\n");
 
             threadMain.await(); // [E] release threads to exit
 

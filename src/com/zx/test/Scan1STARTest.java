@@ -171,6 +171,11 @@ public class Scan1STARTest {
             // AllFileSplitNum = threads for STAR (bwaSamFile)
             AllFileSplitNum = threads;
 
+            // Delete stale BSJ2-BSJn from any previous SCAN2 run to prevent contamination
+            for (int k = 2; k <= AllFileSplitNum; k++) {
+                new File(bwaSamFile + "BSJ" + k).delete();
+            }
+
             // Release threads for scan1
             threadMain.await();
             threadMain.reset();
