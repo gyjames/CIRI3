@@ -2,6 +2,10 @@
   <img src="./data/CIRI3_logo.png" width="60%">
 </p>
 
+## About This Fork
+
+This repository is a fork of [CIRI3](https://github.com/gyjames/CIRI3) that adds four decoupled sub-commands — **SCAN1**, **BUILD_UNIVERSE**, **SCAN2**, and **FINALIZE** — designed to improve high-throughput processing of large cohorts. In the original pipeline, all samples must be processed together in a single JVM invocation. The decoupled sub-commands split the pipeline so that per-sample stages can run independently (and in parallel across a cluster), while the two joint stages run once after all per-sample jobs complete.
+
 ## About
 
 CIRI3 is a comprehensive analysis package for the detection and quantification of circRNAs in RNA-Seq data, while providing differential expression analysis of circRNAs at multiple levels.
@@ -398,39 +402,15 @@ The three main output files are:
 
 ---
 
-## Decoupled HPC Pipeline
+## High-Throughput Processing
 
-For large cohorts on HPC clusters, CIRI3 exposes four independent sub-commands
-that map to the three logical stages of the joint pipeline. Each per-sample
-stage can be submitted as a separate array job; the two joint steps are single
-jobs that run after all per-sample jobs complete.
+This fork adds four decoupled sub-commands that split the joint pipeline into independently schedulable stages, enabling efficient processing of large cohorts where per-sample steps can run in parallel:
 
 ```
-[SCAN1]          per sample, parallelisable (array job)
-[BUILD_UNIVERSE] joint, once — after all SCAN1 jobs finish
-[SCAN2]          per sample, parallelisable (array job)
-[FINALIZE]       joint, once — after all SCAN2 jobs finish
-```
-
-### Installation
-
-```bash
-git clone https://github.com/gyjames/CIRI3.git
-cd CIRI3
-conda env create -n CIRI3 -f ./environment.yaml
-conda activate CIRI3
-```
-
-Compile the source (required after cloning; the pre-built JARs do not include
-the new sub-commands, and compiling from source also applies several pre-existing
-SAM-header-handling bug fixes):
-
-```bash
-# JDK 11+ required
-mkdir -p bin
-find src -name "*.java" > sources.txt
-javac -source 11 -target 11 -cp "bin:lib/htsjdk-3.0.4.jar" -d bin @sources.txt
-# Run as: java -cp "bin:lib/htsjdk-3.0.4.jar" com.zx.test.TestParameters <args>
+[SCAN1]          per sample — first-pass BSJ detection
+[BUILD_UNIVERSE] joint      — build shared circRNA universe from all SCAN1 outputs
+[SCAN2]          per sample — second-pass FSJ counting against the universe
+[FINALIZE]       joint      — merge results and write expression matrices
 ```
 
 ### Sub-command reference
@@ -438,7 +418,7 @@ javac -source 11 -target 11 -cp "bin:lib/htsjdk-3.0.4.jar" -d bin @sources.txt
 #### `SCAN1` — per-sample first scan
 
 ```
-java -cp "bin:lib/htsjdk-3.0.4.jar" com.zx.test.TestParameters SCAN1 \
+java -jar CIRI3.jar SCAN1 \
     -I  sample.sam          \  # SAM/BAM (or chimeric,aligned,bwa triple for -Ma 1)
     -O  sample_prefix       \  # output prefix; writes {prefix}.scan1_meta
     -F  ref.fa              \
@@ -448,13 +428,13 @@ java -cp "bin:lib/htsjdk-3.0.4.jar" com.zx.test.TestParameters SCAN1 \
 ```
 
 Outputs:
-- `{sample_prefix}.scan1_meta` — checkpoint metadata
-- `{sample.sam}BSJ{1..N}` — per-thread BSJ fragment files (kept, not deleted)
+- `{sample_prefix}.scan1_meta` — checkpoint metadata (readLen, fileSplitNum, etc.)
+- `{sample.sam}BSJ{1..N}` — per-thread BSJ fragment files
 
 #### `BUILD_UNIVERSE` — joint universe construction
 
 ```
-java -cp "bin:lib/htsjdk-3.0.4.jar" com.zx.test.TestParameters BUILD_UNIVERSE \
+java -jar CIRI3.jar BUILD_UNIVERSE \
     -I  samples_scan1.tsv   \  # two-column TSV: samFile<TAB>scan1_meta_path
     -F  ref.fa              \
     -O  cohort_prefix          # output prefix; writes {prefix}.universe
@@ -469,19 +449,19 @@ java -cp "bin:lib/htsjdk-3.0.4.jar" com.zx.test.TestParameters BUILD_UNIVERSE \
 #### `SCAN2` — per-sample second scan
 
 ```
-java -cp "bin:lib/htsjdk-3.0.4.jar" com.zx.test.TestParameters SCAN2 \
+java -jar CIRI3.jar SCAN2 \
     -I  sample.sam          \  # same SAM/BAM as SCAN1 (BSJ files must exist)
     -CU cohort.universe     \  # universe file from BUILD_UNIVERSE
     -O  sample_scan2_prefix \  # output prefix; writes {prefix}.fsj_counts
     -F  ref.fa              \
-   [-T  8]                  \  # threads (default: 1; should match SCAN1 thread count)
+   [-T  8]                  \  # threads (should match SCAN1 thread count)
    [-Ma 0]                     # must match -Ma used in SCAN1
 ```
 
-#### `FINALIZE` — joint Summary + Annotation + matrix writing
+#### `FINALIZE` — joint merge and matrix writing
 
 ```
-java -cp "bin:lib/htsjdk-3.0.4.jar" com.zx.test.TestParameters FINALIZE \
+java -jar CIRI3.jar FINALIZE \
     -I  finalize_samples.tsv \  # four-column TSV (see below)
     -F  ref.fa               \
     -O  cohort_prefix        \  # output prefix; writes result, BSJ_Matrix, FSJ_Matrix
@@ -514,8 +494,7 @@ seqLen=139
 chr1	1379083	1414681
 chr1	1384101	1397537
 ```
-First line: `seqLen=<int>` (global max readLen − 12).
-Subsequent lines: one circRNA candidate per line, tab-separated (`chr start end [extra...]`).
+First line: `seqLen=<int>` (global max readLen − 12). Subsequent lines: one circRNA candidate per line (`chr start end`).
 
 **`.fsj_counts`** — written by SCAN2, read by FINALIZE
 ```
@@ -524,123 +503,52 @@ chr1	1384101	1397537	0
 ```
 Tab-separated: `chr start end fsjCount` — one line per circRNA in the universe.
 
-### Example HPC workflow (BWA-MEM, Slurm)
+---
+
+## Building from Source
+
+### Prerequisites
+
+- JDK 8 or later (`javac`, `jar`)
+- `lib/htsjdk-3.0.4.jar` (included in the repository)
+
+### Compile
 
 ```bash
-THREADS=8
-REF_FA=/path/to/ref.fa
-GTF=/path/to/ref.gtf
-SAMPLES=(sample1 sample2 sample3 sample4)
-CIRI3_CP="bin:lib/htsjdk-3.0.4.jar"
-CIRI3="java -cp $CIRI3_CP com.zx.test.TestParameters"
-
-# Stage 1 — submit as array job
-for S in "${SAMPLES[@]}"; do
-  $CIRI3 SCAN1 -I ${S}.sam -O ${S} -F $REF_FA -A $GTF -T $THREADS
-done
-
-# Stage 2a — run once after all SCAN1 jobs complete
-> samples_scan1.tsv
-for S in "${SAMPLES[@]}"; do
-  echo -e "$(realpath ${S}.sam)\t$(realpath ${S}.scan1_meta)"
-done >> samples_scan1.tsv
-$CIRI3 BUILD_UNIVERSE -I samples_scan1.tsv -F $REF_FA -O cohort
-
-# Stage 3 — submit as array job
-for S in "${SAMPLES[@]}"; do
-  $CIRI3 SCAN2 -I ${S}.sam -CU cohort.universe -O ${S}.scan2 -F $REF_FA -T $THREADS
-done
-
-# Stage 2b — run once after all SCAN2 jobs complete
-> finalize_samples.tsv
-for S in "${SAMPLES[@]}"; do
-  SPLITNUM=$(grep "^fileSplitNum=" ${S}.scan1_meta | cut -d= -f2)
-  echo -e "$(realpath ${S}.sam)\t$(realpath ${S}.scan2.fsj_counts)\t${SPLITNUM}\t${S}"
-done >> finalize_samples.tsv
-$CIRI3 FINALIZE -I finalize_samples.tsv -F $REF_FA -O cohort -A $GTF -S 2
+mkdir -p bin
+find src -name "*.java" > sources.txt
+javac -source 8 -target 8 -cp "lib/htsjdk-3.0.4.jar" -d bin @sources.txt
+rm sources.txt
 ```
 
-### Example HPC workflow (STAR, Slurm)
+### Create a distributable JAR
+
+Create a manifest file that sets the main class and bundles the htsjdk dependency:
 
 ```bash
-# After STAR alignment + BWA-MEM re-alignment of unmapped reads, the input
-# triple for each sample is:
-#   Chimeric.out.junction,Aligned.out.sam,bwa.sam
-#
-# IMPORTANT: BSJ fragment files are written next to bwa.sam (not the STAR SAM).
-# The bwa.sam path must therefore be used as the samFile key in
-# BUILD_UNIVERSE and FINALIZE TSVs.
+# Extract htsjdk into the bin directory so it is included in the JAR
+cd bin
+jar xf ../lib/htsjdk-3.0.4.jar
+cd ..
 
-THREADS=8
-REF_FA=/path/to/ref.fa
-GTF=/path/to/ref.gtf
-SAMPLES=(sample1 sample2 sample3 sample4)
-CIRI3_CP="bin:lib/htsjdk-3.0.4.jar"
-CIRI3="java -cp $CIRI3_CP com.zx.test.TestParameters"
+# Write the manifest
+cat > MANIFEST.MF <<'EOF'
+Manifest-Version: 1.0
+Main-Class: com.zx.test.TestParameters
+EOF
 
-# Stage 1 — submit as array job
-for S in "${SAMPLES[@]}"; do
-  TRIPLE="STAR_output_${S}/Chimeric.out.junction,\
-STAR_output_${S}/Aligned.out.sam,\
-STAR_output_${S}/bwa.sam"
-  $CIRI3 SCAN1 -I "$TRIPLE" -O ${S} -F $REF_FA -A $GTF -T $THREADS -Ma 1
-done
-
-# Stage 2a — run once after all SCAN1 jobs complete
-# Column 1 of samples_scan1.tsv must be the bwa.sam path (where BSJ files live)
-> samples_scan1.tsv
-for S in "${SAMPLES[@]}"; do
-  BWA_SAM=$(realpath STAR_output_${S}/bwa.sam)
-  echo -e "${BWA_SAM}\t$(realpath ${S}.scan1_meta)"
-done >> samples_scan1.tsv
-$CIRI3 BUILD_UNIVERSE -I samples_scan1.tsv -F $REF_FA -O cohort
-
-# Stage 3 — submit as array job
-for S in "${SAMPLES[@]}"; do
-  TRIPLE="STAR_output_${S}/Chimeric.out.junction,\
-STAR_output_${S}/Aligned.out.sam,\
-STAR_output_${S}/bwa.sam"
-  $CIRI3 SCAN2 -I "$TRIPLE" -CU cohort.universe -O ${S}.scan2 -F $REF_FA -T $THREADS -Ma 1
-done
-
-# Stage 4 — run once after all SCAN2 jobs complete
-# Column 1 must again be the bwa.sam path (used to locate BSJ files for BSJ matrix)
-> finalize_samples.tsv
-for S in "${SAMPLES[@]}"; do
-  BWA_SAM=$(realpath STAR_output_${S}/bwa.sam)
-  SPLITNUM=$(grep "^fileSplitNum=" ${S}.scan1_meta | cut -d= -f2)
-  echo -e "${BWA_SAM}\t$(realpath ${S}.scan2.fsj_counts)\t${SPLITNUM}\t${S}"
-done >> finalize_samples.tsv
-$CIRI3 FINALIZE -I finalize_samples.tsv -F $REF_FA -O cohort -A $GTF -S 2
+# Build the JAR (name it after your Java version, e.g. CIRI3_Java_1.8.0.jar)
+JAVA_VERSION=$(java -version 2>&1 | head -1 | awk -F'"' '{print $2}')
+jar cfm "CIRI3_Java_${JAVA_VERSION}.jar" MANIFEST.MF -C bin .
+rm MANIFEST.MF
 ```
 
-### Verifying equivalence with the original pipeline
-
-**Bundled test data (BWA-MEM, ~7 s):**
+The resulting `CIRI3_Java_<version>.jar` is self-contained and can be used as:
 
 ```bash
-bash scripts/test_decoupled_pipeline.sh
-bash scripts/test_decoupled_pipeline.sh --threads 4   # multi-thread
-bash scripts/test_decoupled_pipeline.sh --keep        # keep intermediates
+java -jar CIRI3_Java_<version>.jar -I sample.sam -O result -F ref.fa
+java -jar CIRI3_Java_<version>.jar SCAN1 -I sample.sam -O sample -F ref.fa -T 8
 ```
-
-Compiles from source, runs both the original (`-W 1`) and decoupled pipelines
-on the four SAM files in `data/circRNA/Mutiple/`, normalises column order,
-sorts rows by circRNA ID, and reports PASS/FAIL for every check.
-
-**Full-size data (STAR mode):**
-
-```bash
-bash scripts/test_decoupled_pipeline_star_fullsize.sh
-bash scripts/test_decoupled_pipeline_star_fullsize.sh --threads 8 --keep
-```
-
-Edit the `DATA_DIR`, `SAMPLES`, `CIRI3_JAR`, `REF_FA`, and `GTF_FILE`
-variables at the top of the script to match your environment. The script:
-1. Runs the original pipeline with the pre-built JAR (`-W 1 -Ma 1`)
-2. Runs the decoupled pipeline (SCAN1 → BUILD_UNIVERSE → SCAN2 → FINALIZE)
-   using compiled source from this repository
-3. Compares BSJ and FSJ matrices for exact equality
 
 ---
 
